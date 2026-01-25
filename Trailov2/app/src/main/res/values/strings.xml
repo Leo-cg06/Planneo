@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trailo</string>
+
+    <string name="bienvenida_titulo">Bienvenido a Trailo</string>
+    <string name="bienvenida_descripcion">Descubre los mejores senderos, parques naturales y actividades al aire libre cerca de ti.</string>
+    <string name="comenzar">Comienza tu aventura</string>
+
+    <string name="iniciar_sesion">Iniciar Sesión</string>
+    <string name="registrarse">Registrarse</string>
+    <string name="correo_electronico">Correo electrónico</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="confirmar_contrasena">Confirmar contraseña</string>
+    <string name="no_tienes_cuenta">¿No tienes cuenta? Regístrate</string>
+    <string name="ya_tienes_cuenta">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="cerrar_sesion">Cerrar Sesión</string>
+
+    <string name="error_campos_vacios">Por favor completa todos los campos</string>
+    <string name="error_contrasenas_no_coinciden">Las contraseñas no coinciden</string>
+    <string name="error_correo_invalido">Correo electrónico inválido</string>
+    <string name="error_contrasena_corta">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="error_credenciales">Credenciales inválidas</string>
+    <string name="error_registro">Error en el registro</string>
+    <string name="exito_registro">Registro exitoso</string>
+
+    <string name="actividades">Actividades</string>
+    <string name="parques">Parques</string>
+    <string name="perfil">Perfil</string>
+
+    <string name="ubicacion">Ubicación</string>
+    <string name="informacion">Información</string>
+    <string name="valoracion">Valoración</string>
+    <string name="duracion">Duración</string>
+    <string name="dificultad">Dificultad</string>
+    <string name="distancia">Distancia</string>
+    <string name="extension">Extensión</string>
+    <string name="fauna">Fauna</string>
+    <string name="flora">Flora</string>
+
+    <string name="anadido_favoritos">Añadido a favoritos</string>
+    <string name="eliminado_favoritos">Eliminado de favoritos</string>
+    <string name="ver_ubicacion">Ver Ubicación</string>
+    <string name="valorar">Valorar</string>
+    <string name="ver_resenas">Ver Reseñas</string>
+    <string name="volver">Volver</string>
+    <string name="enviar">Enviar</string>
+    <string name="buscar">Buscar…</string>
+
+    <string name="resena">Reseñas:</string>
+    <string name="tu_nombre">Tu nombre</string>
+    <string name="tu_comentario">Tu comentario</string>
+    <string name="error_nombre_vacio">Por favor ingresa tu nombre</string>
+    <string name="error_comentario_vacio">Por favor escribe un comentario</string>
+    <string name="error_sin_valoracion">Por favor selecciona una calificación</string>
+    <string name="exito_resena">¡Valoración enviada! </string>
+
+    <string name="favoritos">Favoritos</string>
+    <string name="sin_favoritos">Aún no tienes favoritos</string>
+    <string name="tipo_actividad">Actividad</string>
+    <string name="tipo_parque">Parque</string>
+
+    <string name="sin_resenas">Aún no hay reseñas</string>
+
+    <string name="url_base_imagen">https://drive.google.com/uc? export=view&amp;id=</string>
+    <string name="distancia_icon_desc">icono distancia</string>
+</resources>
