@@ -128,7 +128,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             val favoritosIds = if (userId != null) {
                 FavoritoRepository.getFavoritosByUser(userId)
-                    .map { it.lugarId } // ✅ Usa lugarId
+                    .map { it.lugarId }
             } else {
                 emptyList()
             }
