@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maestre.planneo.bd.AuthenticationRepositoryImpl
 import com.maestre.planneo.model.Valoracion
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 
 class ValorarActivity : ComponentActivity() {
@@ -35,7 +35,7 @@ class ValorarActivity : ComponentActivity() {
         val nombre = intent.getStringExtra("nombre") ?: ""
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
 
                 ValorarContent(

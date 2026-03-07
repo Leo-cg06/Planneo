@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maestre.planneo.model.Valoracion
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,7 +34,7 @@ class VerResenasActivity : ComponentActivity() {
         val lugarId = intent.getIntExtra("lugarId", 0)
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
 
                 VerResenasContent(

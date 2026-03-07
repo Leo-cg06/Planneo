@@ -85,7 +85,7 @@ private val EsquemaColoresClaro = lightColorScheme(
 
 
 @Composable
-fun Trailov2Theme(
+fun PlanneoTheme(
     temaOscuro: Boolean = isSystemInDarkTheme(),
     colorDinamico: Boolean = false,
     contenido: @Composable () -> Unit

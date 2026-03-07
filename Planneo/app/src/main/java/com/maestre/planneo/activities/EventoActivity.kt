@@ -1,5 +1,6 @@
 package com.maestre.planneo.activities
 
+import com.maestre.planneo.R
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,7 +27,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.model.Evento
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,7 +41,7 @@ class EventoActivity : ComponentActivity() {
 
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
                 val context = LocalContext.current
 

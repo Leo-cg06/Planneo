@@ -29,7 +29,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.model.LugarConFavorito
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.AuthViewModel
 import com.maestre.planneo.viewmodel.MainViewModel
 
@@ -41,7 +41,7 @@ class PerfilActivity : ComponentActivity() {
 
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val authViewModel: AuthViewModel = viewModel()
                 val mainViewModel: MainViewModel = viewModel()
                 val context = LocalContext.current

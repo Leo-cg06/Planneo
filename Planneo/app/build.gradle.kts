@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.leo.planneo"
+    namespace = "com.maestre.planneo"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.leo.planneo"
+        applicationId = "com.maestre.planneo"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

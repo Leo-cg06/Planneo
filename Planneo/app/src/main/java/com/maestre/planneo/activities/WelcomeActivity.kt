@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.maestre.planneo.bd.AuthenticationRepositoryImpl
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 
 class WelcomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,7 +34,7 @@ class WelcomeActivity : ComponentActivity() {
         }
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 WelcomeContent(
                     onComenzar = {
                         val intent = Intent(this, LoginActivity::class.java)

@@ -28,7 +28,7 @@ import coil.request.ImageRequest
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.ui.theme.Amarillo
 import com.maestre.planneo.ui.theme.RojoOscuro
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 
 class DetalleLugarActivity : ComponentActivity() {
@@ -41,7 +41,7 @@ class DetalleLugarActivity : ComponentActivity() {
         val lugarId = intent.getIntExtra("lugarId", 0)
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
 
                 DetalleLugarContent(

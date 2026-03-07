@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,7 +39,7 @@ class DetalleEventoActivity : ComponentActivity() {
         val eventoId = intent.getIntExtra("eventoId", 0)
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
 
                 DetalleEventoContent(

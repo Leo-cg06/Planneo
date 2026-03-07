@@ -32,7 +32,7 @@ import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.model.LugarConFavorito
 import com.maestre.planneo.ui.theme.Amarillo
 import com.maestre.planneo.ui.theme.RojoOscuro
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 
 class LugaresActivity : ComponentActivity() {
@@ -42,7 +42,7 @@ class LugaresActivity : ComponentActivity() {
 
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
                 val context = LocalContext.current
 

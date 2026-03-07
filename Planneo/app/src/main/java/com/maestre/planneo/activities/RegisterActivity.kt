@@ -23,7 +23,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.AuthViewModel
 import com.maestre.planneo.viewmodel.LoginState
 
@@ -33,7 +33,7 @@ class RegisterActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val authViewModel: AuthViewModel = viewModel()
 
                 RegisterContent(

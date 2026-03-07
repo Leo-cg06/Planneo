@@ -1,4 +1,5 @@
 package com.maestre.planneo.activities
+
 import com.maestre.planneo.R
 import android.content.Intent
 import android.os.Bundle
@@ -26,7 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.maestre.planneo.ui.theme.Trailov2Theme
+import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.AuthViewModel
 import com.maestre.planneo.viewmodel.LoginState
 
@@ -36,7 +37,7 @@ class LoginActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            Trailov2Theme {
+            PlanneoTheme {
                 val authViewModel: AuthViewModel = viewModel()
 
                 LoginContent(
