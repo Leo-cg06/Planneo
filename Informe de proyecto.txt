@@ -1,0 +1,9 @@
+Actualmente falta por implementar un mapa que utilice una API con lugares, tenemos planeado usar que sirve un mapa con puntos de interés ya definidos. También falta por hacer la función de la agenda, para crear y guardar planes.
+
+Al principio queríamos hacer la aplicación compatible con iOS utilizando Compose Multiplatform, pero hemos pensado utilizar Jetpack Compose y sólo soportar Android.
+
+Las funciones composable de las Activity se tienen que modularizar, ahora mismo las pantallas son monolíticas y deberían estar compuestas de otros composables más pequeños.
+
+Los anexos están sin redactar.
+
+Hemos planteado, sin garantía y sólo si nos sobra tiempo, implementar opcionalmente una API REST con Spring y un cliente con Angular para administradores de la aplicación.
