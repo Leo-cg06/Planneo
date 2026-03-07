@@ -20,6 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Trailov2"
+rootProject.name = "Planneo"
 include(":app")
  
