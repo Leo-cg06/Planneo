@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Trailo</string>
+    <string name="app_name">Planneo</string>
 
     <string name="bienvenida_titulo">Bienvenido a Planneo</string>
     <string name="bienvenida_descripcion">Descubre los mejores lugares, eventos y actividades cerca de ti.</string>

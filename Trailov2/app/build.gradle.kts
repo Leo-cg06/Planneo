@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.leo.trailov2"
+    namespace = "com.leo.planneo"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.leo.trailov2"
+        applicationId = "com.leo.planneo"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
