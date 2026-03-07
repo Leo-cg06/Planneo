@@ -1,6 +1,11 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.content.Intent
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,19 +23,57 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.components.BottomNavBar
 import com.leo.trailov2.model.ActividadConFavorito
 import com.leo.trailov2.ui.theme.Amarillo
-
 import com.leo.trailov2.ui.theme.RojoOscuro
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+class ActividadesActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        setContent {
+            Trailov2Theme {
+                val mainViewModel: MainViewModel = viewModel()
+                val context = LocalContext.current
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        BottomNavBar(currentScreen = "actividades", context = context)
+                    }
+                ) { innerPadding ->
+                    ActividadesContent(
+                        viewModel = mainViewModel,
+                        modifier = Modifier.padding(innerPadding),
+                        onActividadClick = { actividadConFavorito ->
+                            val intent = Intent(context, DetalleActividadActivity::class.java)
+                            intent.putExtra("actividadId", actividadConFavorito.actividad.id)
+                            startActivity(intent)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
-fun ActividadesScreen(
+fun ActividadesContent(
     viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
     onActividadClick: (ActividadConFavorito) -> Unit
 ) {
     val actividades by viewModel.actividades.collectAsState()
@@ -42,59 +85,53 @@ fun ActividadesScreen(
         viewModel.cargarActividades()
     }
 
-    Scaffold(
-
-    ) { paddingValues ->
-        Column(
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.buscarActividades(it) },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.buscarActividades(it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.buscar)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.buscarActividades("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = null)
-                        }
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = { Text(stringResource(R.string.buscar)) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.buscarActividades("") }) {
+                        Icon(Icons.Filled.Clear, contentDescription = null)
                     }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(24.dp)
-            )
-
-            if (cargando) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(actividades, key = { it.actividad.id }) { actividadConFavorito ->
-                        ActividadCard(
-                            actividadConFavorito = actividadConFavorito,
-                            onClick = { onActividadClick(actividadConFavorito) },
-                            onFavoritoClick = {
-                                viewModel.alternarActividadFavorito(actividadConFavorito)
-                                val mensaje = if (! actividadConFavorito.esFavorito)
-                                    R.string.anadido_favoritos
-                                else
-                                    R.string.eliminado_favoritos
-                                Toast.makeText(context, mensaje,Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
+        )
+
+        if (cargando) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(actividades, key = { it.actividad.id }) { actividadConFavorito ->
+                    ActividadCard(
+                        actividadConFavorito = actividadConFavorito,
+                        onClick = { onActividadClick(actividadConFavorito) },
+                        onFavoritoClick = {
+                            viewModel.alternarActividadFavorito(actividadConFavorito)
+                            val mensaje = if (!actividadConFavorito.esFavorito)
+                                R.string.anadido_favoritos
+                            else
+                                R.string.eliminado_favoritos
+                            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
             }
         }
@@ -104,7 +141,7 @@ fun ActividadesScreen(
 @Composable
 fun ActividadCard(
     actividadConFavorito: ActividadConFavorito,
-    onClick:  () -> Unit,
+    onClick: () -> Unit,
     onFavoritoClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -131,7 +168,7 @@ fun ActividadCard(
                         .fillMaxWidth()
                         .height(180.dp)
                         .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                    contentScale = ContentScale. Crop
+                    contentScale = ContentScale.Crop
                 )
 
                 IconButton(
@@ -145,8 +182,8 @@ fun ActividadCard(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
                     ) {
                         Icon(
-                            imageVector = if (actividadConFavorito.esFavorito) Icons. Filled.Favorite
-                            else Icons. Filled.FavoriteBorder,
+                            imageVector = if (actividadConFavorito.esFavorito) Icons.Filled.Favorite
+                            else Icons.Filled.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.padding(8.dp),
                             tint = if (actividadConFavorito.esFavorito) MaterialTheme.colorScheme.error
@@ -166,9 +203,10 @@ fun ActividadCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint= RojoOscuro)
+                    Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = RojoOscuro)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(                        text = actividad.ubicacion,
+                    Text(
+                        text = actividad.ubicacion,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -183,13 +221,10 @@ fun ActividadCard(
                         Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
                         Text(" ${actividad.valoracion}", style = MaterialTheme.typography.bodySmall)
                     }
-
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Timer, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         Text(" ${actividad.duracion}", style = MaterialTheme.typography.bodySmall)
                     }
-
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Stairs, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         Text(" ${actividad.dificultad}", style = MaterialTheme.typography.bodySmall)
@@ -198,8 +233,6 @@ fun ActividadCard(
                         Icon(Icons.Filled.Straighten, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
                         Text(" ${actividad.km}", style = MaterialTheme.typography.bodySmall)
                     }
-
-
                 }
             }
         }

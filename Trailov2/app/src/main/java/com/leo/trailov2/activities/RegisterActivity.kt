@@ -1,6 +1,10 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,12 +21,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.AuthViewModel
+
+class RegisterActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        setContent {
+            Trailov2Theme {
+                val authViewModel: AuthViewModel = viewModel()
+
+                RegisterContent(
+                    viewModel = authViewModel,
+                    onRegisterSuccess = { finish() },
+                    onNavigateBack = { finish() }
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(
+fun RegisterContent(
     viewModel: AuthViewModel,
     onRegisterSuccess: () -> Unit,
     onNavigateBack: () -> Unit
@@ -35,7 +65,6 @@ fun RegisterScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
-    // Manejar errores
     LaunchedEffect(state.error) {
         state.error?.let { error ->
             val mensaje = when (error) {
@@ -51,12 +80,11 @@ fun RegisterScreen(
         }
     }
 
-    // Manejar registro exitoso
     LaunchedEffect(state.mesnajeExito) {
         state.mesnajeExito?.let {
             Toast.makeText(context, context.getString(R.string.exito_registro), Toast.LENGTH_LONG).show()
             viewModel.clearSuccessMessage()
-            onRegisterSuccess() // Volver a la pantalla de Login
+            onRegisterSuccess()
         }
     }
 
@@ -95,7 +123,7 @@ fun RegisterScreen(
                 label = { Text(stringResource(R.string.correo_electronico)) },
                 leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true
             )
 
@@ -139,9 +167,7 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = {
-                    viewModel.register(correo, contrasena, confirmcontrasena)
-                },
+                onClick = { viewModel.register(correo, contrasena, confirmcontrasena) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

@@ -1,6 +1,11 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.content.Intent
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,19 +23,58 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.components.BottomNavBar
 import com.leo.trailov2.model.ParqueConFavorito
 import com.leo.trailov2.ui.theme.Amarillo
 import com.leo.trailov2.ui.theme.MarronOscuro
 import com.leo.trailov2.ui.theme.RojoOscuro
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+class ParquesActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        setContent {
+            Trailov2Theme {
+                val mainViewModel: MainViewModel = viewModel()
+                val context = LocalContext.current
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        BottomNavBar(currentScreen = "parques", context = context)
+                    }
+                ) { innerPadding ->
+                    ParquesContent(
+                        viewModel = mainViewModel,
+                        modifier = Modifier.padding(innerPadding),
+                        onParqueClick = { parqueConFavorito ->
+                            val intent = Intent(context, DetalleParqueActivity::class.java)
+                            intent.putExtra("parqueId", parqueConFavorito.parque.id)
+                            startActivity(intent)
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
-fun ParquesScreen(
+fun ParquesContent(
     viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
     onParqueClick: (ParqueConFavorito) -> Unit
 ) {
     val parques by viewModel.parques.collectAsState()
@@ -42,59 +86,53 @@ fun ParquesScreen(
         viewModel.buscarParques()
     }
 
-    Scaffold(
-
-    ) { paddingValues ->
-        Column(
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.buscarParques(it) },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.buscarParques(it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text(stringResource(R.string.buscar)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.buscarParques("") }) {
-                            Icon(Icons.Filled.Clear, contentDescription = null)
-                        }
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = { Text(stringResource(R.string.buscar)) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.buscarParques("") }) {
+                        Icon(Icons.Filled.Clear, contentDescription = null)
                     }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(24.dp)
-            )
-
-            if (cargando) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
                 }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
-                ) {
-                    items(parques, key = { it.parque.id }) { parqueConFavorito ->
-                        ParqueCard(
-                            parqueConFavorito = parqueConFavorito,
-                            onClick = { onParqueClick(parqueConFavorito) },
-                            onFavoritoClick = {
-                                viewModel.alternarParqueFavorito(parqueConFavorito)
-                                val mensaje = if (!parqueConFavorito.esFavorito)
-                                    R.string.anadido_favoritos
-                                else
-                                    R.string.eliminado_favoritos
-                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
-                            }
-                        )
-                    }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(24.dp)
+        )
+
+        if (cargando) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(parques, key = { it.parque.id }) { parqueConFavorito ->
+                    ParqueCard(
+                        parqueConFavorito = parqueConFavorito,
+                        onClick = { onParqueClick(parqueConFavorito) },
+                        onFavoritoClick = {
+                            viewModel.alternarParqueFavorito(parqueConFavorito)
+                            val mensaje = if (!parqueConFavorito.esFavorito)
+                                R.string.anadido_favoritos
+                            else
+                                R.string.eliminado_favoritos
+                            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                        }
+                    )
                 }
             }
         }
@@ -168,10 +206,7 @@ fun ParqueCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = RojoOscuro)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = parque.ubicacion,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(text = parque.ubicacion, style = MaterialTheme.typography.bodySmall)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

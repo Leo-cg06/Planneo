@@ -1,5 +1,9 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,15 +16,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.model.Valoracion
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+class VerResenasActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        val tipo = intent.getStringExtra("tipo") ?: ""
+        val idReferencia = intent.getIntExtra("idReferencia", 0)
+
+        setContent {
+            Trailov2Theme {
+                val mainViewModel: MainViewModel = viewModel()
+
+                VerResenasContent(
+                    tipo = tipo,
+                    idReferencia = idReferencia,
+                    viewModel = mainViewModel,
+                    onBack = { finish() }
+                )
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VerResenasScreen(
+fun VerResenasContent(
     tipo: String,
     idReferencia: Int,
     viewModel: MainViewModel,
@@ -46,9 +80,7 @@ fun VerResenasScreen(
     ) { paddingValues ->
         if (valoraciones.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -68,9 +100,7 @@ fun VerResenasScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -89,9 +119,7 @@ private fun ValoracionCard(valoracion: Valoracion) {
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -105,26 +133,13 @@ private fun ValoracionCard(valoracion: Valoracion) {
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Filled.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                            Icon(imageVector = Icons.Filled.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                         }
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = valoracion.nombreUsuario,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text(text = valoracion.nombreUsuario, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
-
-                Text(
-                    text = formatDate(valoracion.fecha),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(text = formatDate(valoracion.fecha), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -135,26 +150,16 @@ private fun ValoracionCard(valoracion: Valoracion) {
                         imageVector = if (i <= valoracion.calificacion) Icons.Filled.Star else Icons.Filled.StarBorder,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = if (i <= valoracion.calificacion) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (i <= valoracion.calificacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "${valoracion.calificacion.toInt()}/5",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = "${valoracion.calificacion.toInt()}/5", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
-                text = valoracion.comentario,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Text(text = valoracion.comentario, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

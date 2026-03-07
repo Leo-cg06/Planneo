@@ -1,9 +1,13 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.content.Intent
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -20,12 +24,46 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.AuthViewModel
 
+class LoginActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        setContent {
+            Trailov2Theme {
+                val authViewModel: AuthViewModel = viewModel()
+
+                LoginContent(
+                    viewModel = authViewModel,
+                    onLoginSuccess = {
+                        val intent = Intent(this, ActividadesActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    },
+                    onNavigateToRegister = {
+                        val intent = Intent(this, RegisterActivity::class.java)
+                        startActivity(intent)
+                    }
+                )
+            }
+        }
+    }
+}
+
 @Composable
-fun LoginScreen(
-    viewModel:  AuthViewModel,
+fun LoginContent(
+    viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
@@ -36,7 +74,7 @@ fun LoginScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state. error) {
+    LaunchedEffect(state.error) {
         state.error?.let { error ->
             val mensaje = when (error) {
                 "error_campos_vacios" -> context.getString(R.string.error_campos_vacios)
@@ -62,7 +100,6 @@ fun LoginScreen(
             modifier = Modifier.size(400.dp)
         )
 
-
         OutlinedTextField(
             value = correo,
             onValueChange = { correo = it },
@@ -81,7 +118,7 @@ fun LoginScreen(
             label = { Text(stringResource(R.string.contrasena)) },
             leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
             trailingIcon = {
-                IconButton(onClick = { contrasenaVisible = ! contrasenaVisible }) {
+                IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
                     Icon(
                         imageVector = if (contrasenaVisible) Icons.Filled.VisibilityOff
                         else Icons.Filled.Visibility,

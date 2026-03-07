@@ -1,8 +1,12 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,16 +21,58 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.ui.theme.Amarillo
 import com.leo.trailov2.ui.theme.RojoOscuro
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
+
+class DetalleActividadActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        val actividadId = intent.getIntExtra("actividadId", 0)
+
+        setContent {
+            Trailov2Theme {
+                val mainViewModel: MainViewModel = viewModel()
+
+                DetalleActividadContent(
+                    actividadId = actividadId,
+                    viewModel = mainViewModel,
+                    onBack = { finish() },
+                    onValorar = { tipo, id, nombre ->
+                        val intent = Intent(this, ValorarActivity::class.java)
+                        intent.putExtra("tipo", tipo)
+                        intent.putExtra("idReferencia", id)
+                        intent.putExtra("nombre", nombre)
+                        startActivity(intent)
+                    },
+                    onVerResenas = { tipo, id, nombre ->
+                        val intent = Intent(this, VerResenasActivity::class.java)
+                        intent.putExtra("tipo", tipo)
+                        intent.putExtra("idReferencia", id)
+                        intent.putExtra("nombre", nombre)
+                        startActivity(intent)
+                    }
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetalleActividadScreen(
+fun DetalleActividadContent(
     actividadId: Int,
     viewModel: MainViewModel,
     onBack: () -> Unit,
@@ -65,8 +111,8 @@ fun DetalleActividadScreen(
                 actions = {
                     IconButton(onClick = {
                         viewModel.alternarActividadFavorito(actividadConFavorito)
-                        val mensaje = if (! esFavorito) R.string.anadido_favoritos else R.string.eliminado_favoritos
-                        Toast.makeText(context, mensaje, Toast. LENGTH_SHORT).show()
+                        val mensaje = if (!esFavorito) R.string.anadido_favoritos else R.string.eliminado_favoritos
+                        Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
                     }) {
                         Icon(
                             imageVector = if (esFavorito) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
@@ -90,66 +136,46 @@ fun DetalleActividadScreen(
                     .crossfade(true)
                     .build(),
                 contentDescription = actividad.nombre,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
+                modifier = Modifier.fillMaxWidth().height(250.dp),
                 contentScale = ContentScale.Crop
             )
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = actividad.nombre,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier. height(8.dp))
+                Text(text = actividad.nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons. Filled.LocationOn, null, Modifier.size(20.dp) , tint = RojoOscuro)
-                    Spacer(modifier = Modifier. width(4.dp))
-                    Text(actividad.ubicacion, style = MaterialTheme.typography. bodyMedium)
+                    Icon(Icons.Filled.LocationOn, null, Modifier.size(20.dp), tint = RojoOscuro)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(actividad.ubicacion, style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Estadísticas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatItem(icon = Icons.Filled.Star, value = actividad.valoracion.toString(), label = stringResource(R.string.valoracion) , colorIcono = Amarillo)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    StatItem(icon = Icons.Filled.Star, value = actividad.valoracion.toString(), label = stringResource(R.string.valoracion), colorIcono = Amarillo)
                     StatItem(icon = Icons.Filled.Schedule, value = actividad.duracion, label = stringResource(R.string.duracion))
-                    StatItem(icon = Icons.Filled.Stairs, value = actividad. dificultad, label = stringResource(R.string.dificultad))
-                    StatItem(icon = Icons. Filled. Straighten, value = String.format("%.1f km", actividad.km), label = stringResource(R. string.distancia))
+                    StatItem(icon = Icons.Filled.Stairs, value = actividad.dificultad, label = stringResource(R.string.dificultad))
+                    StatItem(icon = Icons.Filled.Straighten, value = String.format("%.1f km", actividad.km), label = stringResource(R.string.distancia))
                 }
 
-                Spacer(modifier = Modifier. height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = stringResource(R.string.informacion),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = stringResource(R.string.informacion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = actividad.informacion,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = actividad.informacion, style = MaterialTheme.typography.bodyMedium)
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Botón ubicación
                 Button(
                     onClick = {
                         val uri = Uri.parse("geo:${actividad.latitud},${actividad.longitud}?q=${actividad.latitud},${actividad.longitud}(${actividad.nombre})")
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        intent.setPackage("com.google.android.apps.maps")
-                        if (intent.resolveActivity(context.packageManager) != null) {
-                            context.startActivity(intent)
+                        val mapIntent = Intent(Intent.ACTION_VIEW, uri)
+                        mapIntent.setPackage("com.google.android.apps.maps")
+                        if (mapIntent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(mapIntent)
                         } else {
-                            val browserIntent = Intent(Intent.ACTION_VIEW,
-                                Uri.parse("https://www.google.com/maps/search/?api=1&query=${actividad.latitud},${actividad.longitud}"))
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${actividad.latitud},${actividad.longitud}"))
                             context.startActivity(browserIntent)
                         }
                     },
@@ -162,23 +188,13 @@ fun DetalleActividadScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = { onValorar("actividad", actividad.id, actividad.nombre) },
-                        modifier = Modifier.weight(1f)
-                    ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { onValorar("actividad", actividad.id, actividad.nombre) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.Star, null, Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.valorar))
                     }
-
-                    Button(
-                        onClick = { onVerResenas("actividad", actividad.id, actividad.nombre) },
-                        modifier = Modifier.weight(1f)
-                    ) {
+                    Button(onClick = { onVerResenas("actividad", actividad.id, actividad.nombre) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.RateReview, null, Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.ver_resenas))
@@ -191,28 +207,15 @@ fun DetalleActividadScreen(
 
 @Composable
 private fun StatItem(
-    icon:  androidx.compose.ui.graphics. vector.ImageVector,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     value: String,
     label: String,
-    colorIcono: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary  // ← Parámetro nuevo
+    colorIcono: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colorIcono,  // ← Usa el color que le pasaste
-            modifier = Modifier.size(28.dp)
-        )
+        Icon(imageVector = icon, contentDescription = null, tint = colorIcono, modifier = Modifier.size(28.dp))
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography. bodyMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme. onSurfaceVariant
-        )
+        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+        Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

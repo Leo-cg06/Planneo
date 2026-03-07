@@ -1,6 +1,10 @@
-package com.leo.trailov2.screens
+package com.leo.trailov2.activities
 
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,18 +18,50 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
+import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.model.Valoracion
+import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
+
+class ValorarActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        SupabaseClient.init(this)
+        AuthRepositoryImpl.init(this)
+
+        val tipo = intent.getStringExtra("tipo") ?: ""
+        val idReferencia = intent.getIntExtra("idReferencia", 0)
+        val nombre = intent.getStringExtra("nombre") ?: ""
+
+        setContent {
+            Trailov2Theme {
+                val mainViewModel: MainViewModel = viewModel()
+
+                ValorarContent(
+                    tipo = tipo,
+                    idReferencia = idReferencia,
+                    nombre = nombre,
+                    viewModel = mainViewModel,
+                    onBack = { finish() }
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ValorarScreen(
+fun ValorarContent(
     tipo: String,
     idReferencia: Int,
     nombre: String,
     viewModel: MainViewModel,
-    onBack:  () -> Unit
+    onBack: () -> Unit
 ) {
     var nombreUsuario by remember { mutableStateOf("") }
     var comentario by remember { mutableStateOf("") }
@@ -54,47 +90,28 @@ fun ValorarScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = nombre,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text(
-                text = stringResource(R.string.valoracion),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = stringResource(R.string.valoracion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Estrellas interactivas
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 for (i in 1..5) {
-                    IconButton(
-                        onClick = { calificacion = i.toFloat() }
-                    ) {
+                    IconButton(onClick = { calificacion = i.toFloat() }) {
                         Icon(
                             imageVector = if (i <= calificacion) Icons.Filled.Star else Icons.Filled.StarBorder,
                             contentDescription = "Estrella $i",
                             modifier = Modifier.size(40.dp),
-                            tint = if (i <= calificacion) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = if (i <= calificacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
 
-            Text(
-                text = "${calificacion.toInt()}/5",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(text = "${calificacion.toInt()}/5", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -114,9 +131,7 @@ fun ValorarScreen(
                 onValueChange = { comentario = it },
                 label = { Text(stringResource(R.string.tu_comentario)) },
                 leadingIcon = { Icon(Icons.Filled.Comment, contentDescription = null) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
+                modifier = Modifier.fillMaxWidth().height(150.dp),
                 maxLines = 5
             )
 
@@ -155,9 +170,7 @@ fun ValorarScreen(
                         }
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
                 Icon(Icons.Filled.Send, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
