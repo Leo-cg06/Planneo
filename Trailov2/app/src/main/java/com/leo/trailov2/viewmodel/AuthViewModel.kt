@@ -4,14 +4,21 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.AuthenticationRepository
+import com.leo.trailov2.bd.AuthenticationRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-//  Estado de la autenticación que observan las pantallas
+sealed class LoginState {
+    object Idle : LoginState()
+    object Loading : LoginState()
+    data class Success(val email: String) : LoginState()
+    data class Error(val message: String) : LoginState()
+}
+
 data class AuthState(
-    val cargando: Boolean = true,
+    val cargando: Boolean = false,
     val estaLogueado: Boolean = false,
     val userEmail: String = "",
     val error: String? = null,
@@ -20,25 +27,23 @@ data class AuthState(
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val repository: AuthenticationRepository = AuthenticationRepositoryImpl
+
+    private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
+    val loginState: StateFlow<LoginState> = _loginState
+
     private val _state = MutableStateFlow(AuthState())
     val state: StateFlow<AuthState> = _state
 
     init {
-        // Al crear el ViewModel, comprobamos si ya hay sesión guardada
-        Log.d("AuthViewModel", "Inicializando ViewModel")
         comprobarSesion()
     }
 
-    //Comprueba si existe una sesión activa al iniciar la app
     private fun comprobarSesion() {
         viewModelScope.launch {
             try {
-                Log.d("AuthViewModel", "Comprobando sesión...")
-
-                val estaLogueado = AuthRepositoryImpl.isAuthenticated()
-                val correo = AuthRepositoryImpl.getCorreoUserActual() ?: ""
-
-                Log.d("AuthViewModel", "Sesión:  logueado=$estaLogueado, correo=$correo")
+                val estaLogueado = repository.isUserLoggedIn()
+                val correo = repository.getCurrentUserEmail() ?: ""
 
                 _state.value = AuthState(
                     cargando = false,
@@ -56,57 +61,50 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    //Se usa viewModelScope.launch para ejecutar la operación de red sin bloquear la interfaz
-    fun login(correo: String, contrasena: String, onSuccess: () -> Unit) {
+    fun signIn(email: String, password: String) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(cargando = true, error = null)
+            _loginState.value = LoginState.Loading
 
-            if (correo.isBlank() || contrasena.isBlank()) {
-                _state.value = _state.value.copy(cargando = false, error = "error_campos_vacios")
+            if (email.isBlank() || password.isBlank()) {
+                _loginState.value = LoginState.Error("Por favor, completa todos los campos")
                 return@launch
             }
 
-            val resultado = AuthRepositoryImpl.iniciarSesion(correo.trim(), contrasena)
+            val resultado = repository.signIn(email.trim(), password)
 
             if (resultado) {
+                _loginState.value = LoginState.Success(email.trim())
                 _state.value = _state.value.copy(
-                    cargando = false,
                     estaLogueado = true,
-                    userEmail = correo.trim()
+                    userEmail = email.trim()
                 )
-                onSuccess()
             } else {
-                _state.value = _state.value.copy(cargando = false, error = "error_credenciales")
+                _loginState.value = LoginState.Error("Credenciales incorrectas")
             }
         }
     }
 
-    fun register(correo: String, contrasena: String, confirmarContrasena: String) {
+    fun signUp(email: String, password: String) {
         viewModelScope.launch {
-            _state.value = _state.value.copy(cargando = true, error = null, mesnajeExito = null)
+            _loginState.value = LoginState.Loading
 
             when {
-                correo.isBlank() || contrasena.isBlank() || confirmarContrasena.isBlank() -> {
-                    _state.value = _state.value.copy(cargando = false, error = "error_campos_vacios")
+                email.isBlank() || password.isBlank() -> {
+                    _loginState.value = LoginState.Error("Por favor, completa todos los campos")
                 }
-                ! android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches() -> {
-                    _state.value = _state.value.copy(cargando = false, error = "error_correo_invalido")
+                !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                    _loginState.value = LoginState.Error("Correo electrónico inválido")
                 }
-                contrasena.length < 6 -> {
-                    _state.value = _state.value.copy(cargando = false, error = "error_contrasena_corta")
-                }
-                contrasena != confirmarContrasena -> {
-                    _state.value = _state.value.copy(cargando = false, error = "error_contrasenas_no_coinciden")
+                password.length < 6 -> {
+                    _loginState.value = LoginState.Error("La contraseña debe tener al menos 6 caracteres")
                 }
                 else -> {
-                    val resultado = AuthRepositoryImpl.registrarse(correo.trim(), contrasena)
+                    val resultado = repository.signUp(email.trim(), password)
                     if (resultado) {
-                        _state.value = _state.value.copy(
-                            cargando = false,
-                            mesnajeExito = "exito_registro"
-                        )
+                        _loginState.value = LoginState.Success(email.trim())
+                        _state.value = _state.value.copy(mesnajeExito = "Registro exitoso")
                     } else {
-                        _state.value = _state.value.copy(cargando = false, error = "error_registro")
+                        _loginState.value = LoginState.Error("Error al registrarse")
                     }
                 }
             }
@@ -116,30 +114,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun logout(onLogout: () -> Unit) {
         viewModelScope.launch {
             try {
-                Log.d("AuthViewModel", "Iniciando logout...")
-
-                // Poner estado de carga ANTES de cerrar sesión
                 _state.value = _state.value.copy(cargando = true)
-
-                // Cerrar sesión
-                AuthRepositoryImpl.cerrarSesion()
-
-                Log.d("AuthViewModel", "Logout completado")
-
-                // Resetear estado
+                repository.signOut()
                 _state.value = AuthState(cargando = false, estaLogueado = false)
-
-                // Navegar DESPUÉS de actualizar el estado
+                _loginState.value = LoginState.Idle
                 onLogout()
-
             } catch (e: Exception) {
-                Log.e("AuthViewModel", "Error en logout:  ${e.message}")
-
-                // Aunque falle, resetear sesión
+                Log.e("AuthViewModel", "Error en logout: ${e.message}")
                 _state.value = AuthState(cargando = false, estaLogueado = false)
                 onLogout()
             }
         }
+    }
+
+    fun resetState() {
+        _loginState.value = LoginState.Idle
     }
 
     fun clearError() {

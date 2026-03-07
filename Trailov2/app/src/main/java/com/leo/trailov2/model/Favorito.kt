@@ -1,6 +1,5 @@
 package com.leo.trailov2.model
 
-import android.annotation.SuppressLint
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -8,13 +7,6 @@ import kotlinx.serialization.Serializable
 data class Favorito(
     @SerialName("id") val id: Int = 0,
     @SerialName("user_id") val userId: String = "",
-    @SerialName("tipo") val tipo: String = "",
-    @SerialName("item_id") val itemId: Int = 0
-)
-
-@Serializable
-data class FavoritoInsert(
-    @SerialName("user_id") val userId: String,
-    @SerialName("tipo") val tipo: String,
-    @SerialName("item_id") val itemId: Int
+    @SerialName("lugar_id") val lugarId: Int = 0, // ✅ Usa lugar_id
+    @SerialName("created_at") val createdAt: String = ""
 )

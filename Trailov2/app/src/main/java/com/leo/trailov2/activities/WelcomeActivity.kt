@@ -1,4 +1,4 @@
-package  com.leo.trailov2.activities
+package com.leo.trailov2.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,8 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
-import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.bd.AuthenticationRepositoryImpl
 import com.leo.trailov2.ui.theme.Trailov2Theme
 
 class WelcomeActivity : ComponentActivity() {
@@ -26,12 +26,8 @@ class WelcomeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
-
-        // Si ya está logueado, ir directo a Actividades
-        if (AuthRepositoryImpl.isAuthenticated()) {
-            val intent = Intent(this, ActividadesActivity::class.java)
+        if (AuthenticationRepositoryImpl.isUserLoggedIn()) {
+            val intent = Intent(this, LugaresActivity::class.java)
             startActivity(intent)
             finish()
             return
@@ -62,12 +58,12 @@ fun WelcomeContent(onComenzar: () -> Unit) {
                 .fillMaxSize()
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.trailologo),
+                painter = painterResource(id = R.drawable.planneologo),
                 contentDescription = "Logo de la app",
-                modifier = Modifier.size(400.dp)
+                modifier = Modifier.size(300.dp)
             )
 
             Text(

@@ -9,8 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.leo.trailov2.R
-import com.leo.trailov2.activities.ActividadesActivity
-import com.leo.trailov2.activities.ParquesActivity
+import com.leo.trailov2.activities.EventoActivity
+import com.leo.trailov2.activities.LugaresActivity
 import com.leo.trailov2.activities.PerfilActivity
 
 @Composable
@@ -20,35 +20,37 @@ fun BottomNavBar(
 ) {
     NavigationBar {
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.DirectionsWalk, contentDescription = null) },
-            label = { Text(stringResource(R.string.actividades)) },
-            selected = currentScreen == "actividades",
+            icon = { Icon(Icons.Filled.Place, contentDescription = null) },
+            label = { Text("Lugares") },
+            selected = currentScreen == "lugares",
             onClick = {
-                if (currentScreen != "actividades") {
-                    val intent = Intent(context, ActividadesActivity::class.java)
+                if (currentScreen != "lugares") {
+                    val intent = Intent(context, LugaresActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
                 }
             }
         )
+
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.Park, contentDescription = null) },
-            label = { Text(stringResource(R.string.parques)) },
-            selected = currentScreen == "parques",
+            icon = { Icon(Icons.Filled.Event, contentDescription = null) },
+            label = { Text("Eventos") },
+            selected = currentScreen == "eventos",
             onClick = {
-                if (currentScreen != "parques") {
-                    val intent = Intent(context, ParquesActivity::class.java)
+                if (currentScreen != "eventos") {
+                    val intent = Intent(context, EventoActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
                 }
             }
         )
+
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
-            label = { Text(stringResource(R.string.perfil)) },
-            selected = currentScreen == "perfil",
+            icon = { Icon(Icons.Filled.Star, contentDescription = null) },
+            label = { Text("Favoritos") },
+            selected = currentScreen == "Favoritos",
             onClick = {
-                if (currentScreen != "perfil") {
+                if (currentScreen != "Favoritos") {
                     val intent = Intent(context, PerfilActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()

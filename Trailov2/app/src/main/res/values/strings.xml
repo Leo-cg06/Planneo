@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Trailo</string>
 
-    <string name="bienvenida_titulo">Bienvenido a Trailo</string>
-    <string name="bienvenida_descripcion">Descubre los mejores senderos, parques naturales y actividades al aire libre cerca de ti.</string>
+    <string name="bienvenida_titulo">Bienvenido a Planneo</string>
+    <string name="bienvenida_descripcion">Descubre los mejores lugares, eventos y actividades cerca de ti.</string>
     <string name="comenzar">Comienza tu aventura</string>
 
     <string name="iniciar_sesion">Iniciar Sesión</string>
@@ -23,8 +23,7 @@
     <string name="error_registro">Error en el registro</string>
     <string name="exito_registro">Registro exitoso</string>
 
-    <string name="actividades">Actividades</string>
-    <string name="parques">Parques</string>
+
     <string name="perfil">Perfil</string>
 
     <string name="ubicacion">Ubicación</string>
@@ -34,8 +33,7 @@
     <string name="dificultad">Dificultad</string>
     <string name="distancia">Distancia</string>
     <string name="extension">Extensión</string>
-    <string name="fauna">Fauna</string>
-    <string name="flora">Flora</string>
+
 
     <string name="anadido_favoritos">Añadido a favoritos</string>
     <string name="eliminado_favoritos">Eliminado de favoritos</string>
@@ -56,8 +54,6 @@
 
     <string name="favoritos">Favoritos</string>
     <string name="sin_favoritos">Aún no tienes favoritos</string>
-    <string name="tipo_actividad">Actividad</string>
-    <string name="tipo_parque">Parque</string>
 
     <string name="sin_resenas">Aún no hay reseñas</string>
 

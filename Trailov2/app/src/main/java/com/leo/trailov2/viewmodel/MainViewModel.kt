@@ -3,37 +3,35 @@ package com.leo.trailov2.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.leo.trailov2.bd.ActividadRepository
-import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.EventoRepository
 import com.leo.trailov2.bd.FavoritoRepository
-import com.leo.trailov2.bd.ParqueRepository
+import com.leo.trailov2.bd.LugarRepository
 import com.leo.trailov2.bd.ValoracionRepository
-import com.leo.trailov2.model.ActividadConFavorito
-import com.leo.trailov2.model.ParqueConFavorito
+import com.leo.trailov2.model.Evento
+import com.leo.trailov2.model.LugarConFavorito
 import com.leo.trailov2.model.Valoracion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
+import com.leo.trailov2.bd.AuthenticationRepositoryImpl
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Actividades
-    private val _actividades = MutableStateFlow<List<ActividadConFavorito>>(emptyList())
-    val actividades: StateFlow<List<ActividadConFavorito>> = _actividades
+    // Lugares
+    private val _lugares = MutableStateFlow<List<LugarConFavorito>>(emptyList())
+    val lugares: StateFlow<List<LugarConFavorito>> = _lugares
 
-    private val _actividadesFavoritas = MutableStateFlow<List<ActividadConFavorito>>(emptyList())
-    val actividadesFavoritas: StateFlow<List<ActividadConFavorito>> = _actividadesFavoritas
+    private val _lugaresFavoritos = MutableStateFlow<List<LugarConFavorito>>(emptyList())
+    val lugaresFavoritos: StateFlow<List<LugarConFavorito>> = _lugaresFavoritos
 
-    // Parques
-    private val _parques = MutableStateFlow<List<ParqueConFavorito>>(emptyList())
-    val parques: StateFlow<List<ParqueConFavorito>> = _parques
-
-    private val _parquesFavoritos = MutableStateFlow<List<ParqueConFavorito>>(emptyList())
-    val parquesFavoritos: StateFlow<List<ParqueConFavorito>> = _parquesFavoritos
+    // Eventos
+    private val _eventos = MutableStateFlow<List<Evento>>(emptyList())
+    val eventos: StateFlow<List<Evento>> = _eventos
 
     // Valoraciones
     private val _valoraciones = MutableStateFlow<List<Valoracion>>(emptyList())
-    val valoraciones:  StateFlow<List<Valoracion>> = _valoraciones
+    val valoraciones: StateFlow<List<Valoracion>> = _valoraciones
 
     // Estados
     private val _cargando = MutableStateFlow(false)
@@ -43,183 +41,138 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val searchQuery: StateFlow<String> = _searchQuery
 
     private fun getCurrentUserId(): String? {
-        return AuthRepositoryImpl.getUserIdActual()
+        return AuthenticationRepositoryImpl.getCurrentUserId()
     }
 
-    // ACTIVIDADES
+    // LUGARES
 
-    fun cargarActividades() {
+    // Cargar lugares
+    fun cargarLugares(tipo: String? = null) {
         viewModelScope.launch {
             _cargando.value = true
             val userId = getCurrentUserId()
-            val todasActividades = ActividadRepository.getAll()
+
+            val todosLugares = if (tipo != null) {
+                LugarRepository.getByTipo(tipo)
+            } else {
+                LugarRepository.getAll()
+            }
 
             val favoritosIds = if (userId != null) {
-                FavoritoRepository.getFavoritosByUserAndTipo(userId, "actividad")
-                    .map { it.itemId }
+                FavoritoRepository.getFavoritosByUser(userId)
+                    .map { it.lugarId } // ✅ Usa lugarId
             } else {
                 emptyList()
             }
 
-            _actividades.value = todasActividades.map { actividad ->
-                ActividadConFavorito(
-                    actividad = actividad,
-                    esFavorito = actividad.id in favoritosIds
+            _lugares.value = todosLugares.map { lugar ->
+                LugarConFavorito(
+                    lugar = lugar,
+                    esFavorito = lugar.id in favoritosIds
                 )
             }
             _cargando.value = false
         }
     }
 
-    //Carga todas las actividades combinándolas con el estado de favoritos del usuario
-    fun cargarActividadesFavoritas() {
+    // Alternar favorito
+    fun alternarLugarFavorito(lugarConFavorito: LugarConFavorito) {
         viewModelScope.launch {
             val userId = getCurrentUserId() ?: return@launch
 
-            val favoritosIds = FavoritoRepository.getFavoritosByUserAndTipo(userId, "actividad")
-                .map { it.itemId }
+            val exito = FavoritoRepository.alternarFavorito(userId, lugarConFavorito.lugar.id)
 
-            val todasActividades = ActividadRepository.getAll()
-            val favoritas = todasActividades
-                .filter { it.id in favoritosIds }
-                .map { ActividadConFavorito(it, true) }
-
-            _actividadesFavoritas.value = favoritas
+            if (exito) {
+                _lugares.value = _lugares.value.map {
+                    if (it.lugar.id == lugarConFavorito.lugar.id) {
+                        it.copy(esFavorito = !it.esFavorito)
+                    } else {
+                        it
+                    }
+                }
+                cargarLugaresFavoritos()
+            }
         }
     }
 
-    fun buscarActividades(query: String) {
+    // Cargar favoritos
+    fun cargarLugaresFavoritos() {
+        viewModelScope.launch {
+            val userId = getCurrentUserId() ?: return@launch
+
+            val favoritosIds = FavoritoRepository.getFavoritosByUser(userId)
+                .map { it.lugarId }
+
+            val todosLugares = LugarRepository.getAll()
+            val favoritos = todosLugares
+                .filter { it.id in favoritosIds }
+                .map { LugarConFavorito(it, true) }
+
+            _lugaresFavoritos.value = favoritos
+        }
+    }
+
+
+    fun buscarLugares(query: String, tipo: String? = null) {
         _searchQuery.value = query
         viewModelScope.launch {
             _cargando.value = true
             val userId = getCurrentUserId()
 
             val resultado = if (query.isBlank()) {
-                ActividadRepository.getAll()
+                if (tipo != null) LugarRepository.getByTipo(tipo)
+                else LugarRepository.getAll()
             } else {
-                ActividadRepository.search(query)
+                if (tipo != null) LugarRepository.searchByTipo(query, tipo)
+                else LugarRepository.search(query)
             }
 
             val favoritosIds = if (userId != null) {
-                FavoritoRepository.getFavoritosByUserAndTipo(userId, "actividad")
-                    .map { it.itemId }
+                FavoritoRepository.getFavoritosByUser(userId)
+                    .map { it.lugarId } // ✅ Usa lugarId
             } else {
                 emptyList()
             }
 
-            _actividades.value = resultado.map { actividad ->
-                ActividadConFavorito(
-                    actividad = actividad,
-                    esFavorito = actividad.id in favoritosIds
-                )
+            _lugares.value = resultado.map { lugar ->
+                LugarConFavorito(lugar = lugar, esFavorito = lugar.id in favoritosIds)
             }
             _cargando.value = false
         }
     }
 
-    //Quitar o poner favorito
-    fun alternarActividadFavorito(actividadConFavorito: ActividadConFavorito) {
+    // EVENTOS
+
+    fun cargarEventos() {
         viewModelScope.launch {
-            val userId = getCurrentUserId() ?: return@launch
-            FavoritoRepository.alternarFavorito(userId, "actividad", actividadConFavorito.actividad.id)
-            cargarActividades()
-            cargarActividadesFavoritas()
+            _eventos.value = EventoRepository.getAll()
         }
     }
 
-    // PARQUES
-
-    fun buscarParques() {
+    fun cargarEventosProximos() {
         viewModelScope.launch {
-            _cargando.value = true
-            val userId = getCurrentUserId()
-            val todosParques = ParqueRepository.getAll()
-
-            val favoritosIds = if (userId != null) {
-                FavoritoRepository.getFavoritosByUserAndTipo(userId, "parque")
-                    .map { it.itemId }
-            } else {
-                emptyList()
-            }
-
-            _parques.value = todosParques.map { parque ->
-                ParqueConFavorito(
-                    parque = parque,
-                    esFavorito = parque.id in favoritosIds
-                )
-            }
-            _cargando.value = false
+            _eventos.value = EventoRepository.getProximos()
         }
     }
 
-    fun buscarParquesFavoritos() {
+    fun cargarEventosPorLugar(lugarId: Int) {
         viewModelScope.launch {
-            val userId = getCurrentUserId() ?: return@launch
-
-            val favoritosIds = FavoritoRepository.getFavoritosByUserAndTipo(userId, "parque")
-                .map { it.itemId }
-
-            val todosParques = ParqueRepository.getAll()
-            val favoritos = todosParques
-                .filter { it.id in favoritosIds }
-                .map { ParqueConFavorito(it, true) }
-
-            _parquesFavoritos.value = favoritos
-        }
-    }
-
-    fun buscarParques(query:  String) {
-        _searchQuery.value = query
-        viewModelScope.launch {
-            _cargando.value = true
-            val userId = getCurrentUserId()
-
-            val resultado = if (query.isBlank()) {
-                ParqueRepository.getAll()
-            } else {
-                ParqueRepository.search(query)
-            }
-
-            val favoritosIds = if (userId != null) {
-                FavoritoRepository.getFavoritosByUserAndTipo(userId, "parque")
-                    .map { it.itemId }
-            } else {
-                emptyList()
-            }
-
-            _parques.value = resultado.map { parque ->
-                ParqueConFavorito(
-                    parque = parque,
-                    esFavorito = parque.id in favoritosIds
-                )
-            }
-            _cargando.value = false
-        }
-    }
-
-    fun alternarParqueFavorito(parqueConFavorito: ParqueConFavorito) {
-        viewModelScope.launch {
-            val userId = getCurrentUserId() ?: return@launch
-            FavoritoRepository.alternarFavorito(userId, "parque", parqueConFavorito.parque.id)
-            buscarParques()
-            buscarParquesFavoritos()
+            _eventos.value = EventoRepository.getByLugarId(lugarId)
         }
     }
 
     // VALORACIONES
 
-    fun cargarValoraciones(tipo: String, idReferencia: Int) {
+    fun cargarValoraciones(lugarId: Int) {
         viewModelScope.launch {
-            _valoraciones.value = ValoracionRepository.getByTipoAndId(tipo, idReferencia)
+            _valoraciones.value = ValoracionRepository.getByLugarId(lugarId)
         }
     }
 
-    fun insertValoracion(valoracion:  Valoracion, onSuccess: () -> Unit, onError: () -> Unit) {
+    fun insertValoracion(valoracion: Valoracion, onSuccess: () -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             val resultado = ValoracionRepository.insertarValoracion(valoracion)
             if (resultado) onSuccess() else onError()
         }
     }
-
-
 }

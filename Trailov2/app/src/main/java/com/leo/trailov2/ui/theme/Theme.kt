@@ -4,7 +4,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
-import androidx.compose.runtime. Composable
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -12,19 +12,19 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val EsquemaColoresOscuro = darkColorScheme(
-    primary = VerdeSecundarioClaro,
+    primary = AzulSecundarioClaro,
     onPrimary = Negro,
-    primaryContainer = VerdePrimarioOscuro,
+    primaryContainer = AzulPrimarioOscuro,
     onPrimaryContainer = Blanco,
 
-    secondary = VerdeTerciarioClaro,
+    secondary = AzulTerciarioClaro,
     onSecondary = Negro,
-    secondaryContainer = VerdeTerciarioOscuro,
+    secondaryContainer = AzulTerciarioOscuro,
     onSecondaryContainer = Blanco,
 
-    tertiary = VerdeExitoClaro,
+    tertiary = AzulExitoClaro,
     onTertiary = Negro,
-    tertiaryContainer = VerdeExito,
+    tertiaryContainer = AzulExito,
     onTertiaryContainer = Blanco,
 
     background = FondoOscuro,
@@ -44,23 +44,23 @@ private val EsquemaColoresOscuro = darkColorScheme(
 
     inverseSurface = Blanco,
     inverseOnSurface = FondoOscuro,
-    inversePrimary = VerdePrimario
+    inversePrimary = AzulPrimario
 )
 
 private val EsquemaColoresClaro = lightColorScheme(
-    primary = VerdePrimario,
+    primary = AzulPrimario,
     onPrimary = Blanco,
     primaryContainer = FondoTarjetaClara,
     onPrimaryContainer = Negro,
 
-    secondary = VerdeSecundario,
+    secondary = AzulSecundario,
     onSecondary = Blanco,
-    secondaryContainer = VerdeSecundarioClaro,
+    secondaryContainer = AzulSecundarioClaro,
     onSecondaryContainer = Negro,
 
-    tertiary = VerdeTerciario,
+    tertiary = AzulTerciario,
     onTertiary = Blanco,
-    tertiaryContainer = VerdeTerciarioClaro,
+    tertiaryContainer = AzulTerciarioClaro,
     onTertiaryContainer = Negro,
 
     background = FondoClaro,
@@ -80,7 +80,7 @@ private val EsquemaColoresClaro = lightColorScheme(
 
     inverseSurface = GrisOscuro,
     inverseOnSurface = Blanco,
-    inversePrimary = VerdeSecundarioClaro
+    inversePrimary = AzulSecundarioClaro
 )
 
 
@@ -103,9 +103,9 @@ fun Trailov2Theme(
     val vista = LocalView.current
     if (!vista.isInEditMode) {
         SideEffect {
-            val ventana = (vista. context as Activity).window
+            val ventana = (vista.context as Activity).window
             ventana.statusBarColor = esquemaColores.primary.toArgb()
-            WindowCompat.getInsetsController(ventana, vista).isAppearanceLightStatusBars = ! temaOscuro
+            WindowCompat.getInsetsController(ventana, vista).isAppearanceLightStatusBars = !temaOscuro
         }
     }
 

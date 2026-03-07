@@ -27,11 +27,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
 import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.components.BottomNavBar
-import com.leo.trailov2.model.ActividadConFavorito
-import com.leo.trailov2.model.ParqueConFavorito
+import com.leo.trailov2.model.LugarConFavorito
 import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.AuthViewModel
 import com.leo.trailov2.viewmodel.MainViewModel
@@ -41,8 +39,7 @@ class PerfilActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
+
 
         setContent {
             Trailov2Theme {
@@ -60,14 +57,9 @@ class PerfilActivity : ComponentActivity() {
                         authViewModel = authViewModel,
                         mainViewModel = mainViewModel,
                         modifier = Modifier.padding(innerPadding),
-                        onActividadClick = { actividadConFavorito ->
-                            val intent = Intent(context, DetalleActividadActivity::class.java)
-                            intent.putExtra("actividadId", actividadConFavorito.actividad.id)
-                            startActivity(intent)
-                        },
-                        onParqueClick = { parqueConFavorito ->
-                            val intent = Intent(context, DetalleParqueActivity::class.java)
-                            intent.putExtra("parqueId", parqueConFavorito.parque.id)
+                        onLugarClick = { lugarConFavorito ->
+                            val intent = Intent(context, DetalleLugarActivity::class.java)
+                            intent.putExtra("lugarId", lugarConFavorito.lugar.id)
                             startActivity(intent)
                         },
                         onLogout = {
@@ -89,27 +81,19 @@ fun PerfilContent(
     authViewModel: AuthViewModel,
     mainViewModel: MainViewModel,
     modifier: Modifier = Modifier,
-    onActividadClick: (ActividadConFavorito) -> Unit,
-    onParqueClick: (ParqueConFavorito) -> Unit,
+    onLugarClick: (LugarConFavorito) -> Unit,
     onLogout: () -> Unit
 ) {
     val authState by authViewModel.state.collectAsState()
-    val actividadesFavoritas by mainViewModel.actividadesFavoritas.collectAsState()
-    val parquesFavoritos by mainViewModel.parquesFavoritos.collectAsState()
+    val lugaresFavoritos by mainViewModel.lugaresFavoritos.collectAsState()
 
     LaunchedEffect(Unit) {
-        mainViewModel.cargarActividadesFavoritas()
-        mainViewModel.buscarParquesFavoritos()
-    }
-
-    val todosFavoritos = remember(actividadesFavoritas, parquesFavoritos) {
-        actividadesFavoritas + parquesFavoritos
+        mainViewModel.cargarLugaresFavoritos()
     }
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // TopBar manual
         TopAppBar(
             title = { Text(stringResource(R.string.perfil)) },
             actions = {
@@ -119,7 +103,6 @@ fun PerfilContent(
             }
         )
 
-        // Info usuario
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,7 +154,7 @@ fun PerfilContent(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        if (todosFavoritos.isEmpty()) {
+        if (lugaresFavoritos.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -198,23 +181,12 @@ fun PerfilContent(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                items(todosFavoritos) { item ->
-                    when (item) {
-                        is ActividadConFavorito -> {
-                            FavoritoActividadItem(
-                                actividadConFavorito = item,
-                                onClick = { onActividadClick(item) },
-                                onDeleteClick = { mainViewModel.alternarActividadFavorito(item) }
-                            )
-                        }
-                        is ParqueConFavorito -> {
-                            FavoritoParqueItem(
-                                parqueConFavorito = item,
-                                onClick = { onParqueClick(item) },
-                                onDeleteClick = { mainViewModel.alternarParqueFavorito(item) }
-                            )
-                        }
-                    }
+                items(lugaresFavoritos, key = { it.lugar.id }) { lugarConFavorito ->
+                    FavoritoLugarItem(
+                        lugarConFavorito = lugarConFavorito,
+                        onClick = { onLugarClick(lugarConFavorito) },
+                        onDeleteClick = { mainViewModel.alternarLugarFavorito(lugarConFavorito) }
+                    )
                 }
             }
         }
@@ -222,13 +194,13 @@ fun PerfilContent(
 }
 
 @Composable
-private fun FavoritoActividadItem(
-    actividadConFavorito: ActividadConFavorito,
+private fun FavoritoLugarItem(
+    lugarConFavorito: LugarConFavorito,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val actividad = actividadConFavorito.actividad
+    val lugar = lugarConFavorito.lugar
 
     Card(
         modifier = Modifier
@@ -245,10 +217,10 @@ private fun FavoritoActividadItem(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(buildImageUrl(actividad.fotoUrl, context))
+                    .data(buildImageUrl(lugar.fotoUrl, context))
                     .crossfade(true)
                     .build(),
-                contentDescription = actividad.nombre,
+                contentDescription = lugar.nombre,
                 modifier = Modifier
                     .size(60.dp)
                     .clip(RoundedCornerShape(8.dp)),
@@ -258,58 +230,9 @@ private fun FavoritoActividadItem(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = actividad.nombre, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(text = stringResource(R.string.tipo_actividad), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                Text(text = actividad.ubicacion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            IconButton(onClick = onDeleteClick) {
-                Icon(imageVector = Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-            }
-        }
-    }
-}
-
-@Composable
-private fun FavoritoParqueItem(
-    parqueConFavorito: ParqueConFavorito,
-    onClick: () -> Unit,
-    onDeleteClick: () -> Unit
-) {
-    val context = LocalContext.current
-    val parque = parqueConFavorito.parque
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(buildImageUrl(parque.fotoUrl, context))
-                    .crossfade(true)
-                    .build(),
-                contentDescription = parque.nombre,
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = parque.nombre, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(text = stringResource(R.string.tipo_parque), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                Text(text = parque.ubicacion, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = lugar.nombre, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(text = lugar.tipo.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Text(text = lugar.ubicacionTexto, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             IconButton(onClick = onDeleteClick) {

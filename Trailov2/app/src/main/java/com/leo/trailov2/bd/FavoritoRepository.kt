@@ -2,13 +2,13 @@ package com.leo.trailov2.bd
 
 import android.util.Log
 import com.leo.trailov2.model.Favorito
-import com.leo.trailov2.model.FavoritoInsert
 import io.github.jan.supabase.postgrest.from
 
 object FavoritoRepository {
 
     private const val TABLA = "favoritos"
 
+    // Obtener todos los favoritos de un usuario
     suspend fun getFavoritosByUser(userId: String): List<Favorito> {
         return try {
             SupabaseClient.client
@@ -20,37 +20,20 @@ object FavoritoRepository {
                 }
                 .decodeList<Favorito>()
         } catch (e: Exception) {
-            Log.e("FavoritoRepository", "Error al obtener favoritos:  ${e.message}")
+            Log.e("FavoritoRepository", "Error al obtener favoritos: ${e.message}")
             emptyList()
         }
     }
 
-    suspend fun getFavoritosByUserAndTipo(userId: String, tipo:  String): List<Favorito> {
-        return try {
-            SupabaseClient.client
-                .from(TABLA)
-                .select {
-                    filter {
-                        eq("user_id", userId)
-                        eq("tipo", tipo)
-                    }
-                }
-                .decodeList<Favorito>()
-        } catch (e: Exception) {
-            Log.e("FavoritoRepository", "Error al obtener favoritos por tipo: ${e.message}")
-            emptyList()
-        }
-    }
-
-    suspend fun isFavorito(userId: String, tipo: String, itemId: Int): Boolean {
+    // Verificar si es favorito
+    suspend fun isFavorito(userId: String, lugarId: Int): Boolean {
         return try {
             val result = SupabaseClient.client
                 .from(TABLA)
                 .select {
                     filter {
                         eq("user_id", userId)
-                        eq("tipo", tipo)
-                        eq("item_id", itemId)
+                        eq("lugar_id", lugarId)
                     }
                 }
                 .decodeList<Favorito>()
@@ -61,47 +44,67 @@ object FavoritoRepository {
         }
     }
 
-    suspend fun añadirFavorito(userId: String, tipo: String, itemId: Int): Boolean {
+    // Añadir favorito
+    suspend fun añadirFavorito(userId: String, lugarId: Int): Boolean {
         return try {
-            val favorito = FavoritoInsert(
+            Log.d("FavoritoRepository", "Añadiendo favorito: userId=$userId, lugarId=$lugarId")
+
+            val favorito = Favorito(
                 userId = userId,
-                tipo = tipo,
-                itemId = itemId
+                lugarId = lugarId
             )
+
             SupabaseClient.client
                 .from(TABLA)
                 .insert(favorito)
+
+            Log.d("FavoritoRepository", "Favorito añadido exitosamente")
             true
-        } catch (e:  Exception) {
-            Log.e("FavoritoRepository", "Error al añadir favorito: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("FavoritoRepository", "Error al añadir favorito: ${e.message}", e)
             false
         }
     }
 
-    suspend fun eliminarFavorito(userId: String, tipo: String, itemId: Int): Boolean {
+    // Eliminar favorito
+    suspend fun eliminarFavorito(userId: String, lugarId: Int): Boolean {
         return try {
+            Log.d("FavoritoRepository", "Eliminando favorito: userId=$userId, lugarId=$lugarId")
+
             SupabaseClient.client
                 .from(TABLA)
                 .delete {
                     filter {
                         eq("user_id", userId)
-                        eq("tipo", tipo)
-                        eq("item_id", itemId)
+                        eq("lugar_id", lugarId)
                     }
                 }
+
+            Log.d("FavoritoRepository", "Favorito eliminado exitosamente")
             true
-        } catch (e:  Exception) {
-            Log.e("FavoritoRepository", "Error al eliminar favorito: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("FavoritoRepository", "Error al eliminar favorito: ${e.message}", e)
             false
         }
     }
 
-    suspend fun alternarFavorito(userId: String, tipo: String, itemId: Int): Boolean {
-        val esFavorito = isFavorito(userId, tipo, itemId)
-        return if (esFavorito) {
-            eliminarFavorito(userId, tipo, itemId)
-        } else {
-            añadirFavorito(userId, tipo, itemId)
+    // Alternar favorito
+    suspend fun alternarFavorito(userId: String, lugarId: Int): Boolean {
+        return try {
+            val esFavorito = isFavorito(userId, lugarId)
+            Log.d("FavoritoRepository", "Alternando favorito: lugarId=$lugarId, esFavorito=$esFavorito")
+
+            val resultado = if (esFavorito) {
+                eliminarFavorito(userId, lugarId)
+            } else {
+                añadirFavorito(userId, lugarId)
+            }
+
+            Log.d("FavoritoRepository", "Resultado: $resultado")
+            resultado
+        } catch (e: Exception) {
+            Log.e("FavoritoRepository", "Error al alternar favorito", e)
+            false
         }
     }
 }

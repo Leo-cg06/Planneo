@@ -2,6 +2,7 @@ package com.leo.trailov2.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,23 +28,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
 import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.components.BottomNavBar
-import com.leo.trailov2.model.ParqueConFavorito
+import com.leo.trailov2.model.LugarConFavorito
 import com.leo.trailov2.ui.theme.Amarillo
-import com.leo.trailov2.ui.theme.MarronOscuro
 import com.leo.trailov2.ui.theme.RojoOscuro
 import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
 
-class ParquesActivity : ComponentActivity() {
+class LugaresActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
         setContent {
             Trailov2Theme {
@@ -53,15 +50,15 @@ class ParquesActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        BottomNavBar(currentScreen = "parques", context = context)
+                        BottomNavBar(currentScreen = "lugares", context = context)
                     }
                 ) { innerPadding ->
-                    ParquesContent(
+                    LugaresContent(
                         viewModel = mainViewModel,
                         modifier = Modifier.padding(innerPadding),
-                        onParqueClick = { parqueConFavorito ->
-                            val intent = Intent(context, DetalleParqueActivity::class.java)
-                            intent.putExtra("parqueId", parqueConFavorito.parque.id)
+                        onLugarClick = { lugarConFavorito ->
+                            val intent = Intent(context, DetalleLugarActivity::class.java)
+                            intent.putExtra("lugarId", lugarConFavorito.lugar.id)
                             startActivity(intent)
                         }
                     )
@@ -72,26 +69,38 @@ class ParquesActivity : ComponentActivity() {
 }
 
 @Composable
-fun ParquesContent(
+fun LugaresContent(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
-    onParqueClick: (ParqueConFavorito) -> Unit
+    onLugarClick: (LugarConFavorito) -> Unit
 ) {
-    val parques by viewModel.parques.collectAsState()
+    val lugares by viewModel.lugares.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
 
+    Log.d("LugaresContent", "Lugares: ${lugares.size}, Cargando: $cargando")
+
     LaunchedEffect(Unit) {
-        viewModel.buscarParques()
+        Log.d("LugaresContent", "Cargando TODOS los lugares...")
+        viewModel.cargarLugares()
     }
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
+        // Título
+        Text(
+            text = "Lugares de Interés",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(16.dp)
+        )
+
+        // Buscador
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { viewModel.buscarParques(it) },
+            onValueChange = { viewModel.buscarLugares(it) }, // Sin tipo
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -99,7 +108,7 @@ fun ParquesContent(
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.buscarParques("") }) {
+                    IconButton(onClick = { viewModel.buscarLugares("") }) {
                         Icon(Icons.Filled.Clear, contentDescription = null)
                     }
                 }
@@ -115,18 +124,38 @@ fun ParquesContent(
             ) {
                 CircularProgressIndicator()
             }
+        } else if (lugares.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No hay lugares disponibles",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                items(parques, key = { it.parque.id }) { parqueConFavorito ->
-                    ParqueCard(
-                        parqueConFavorito = parqueConFavorito,
-                        onClick = { onParqueClick(parqueConFavorito) },
+                items(lugares, key = { it.lugar.id }) { lugarConFavorito ->
+                    LugarCard(
+                        lugarConFavorito = lugarConFavorito,
+                        onClick = { onLugarClick(lugarConFavorito) },
                         onFavoritoClick = {
-                            viewModel.alternarParqueFavorito(parqueConFavorito)
-                            val mensaje = if (!parqueConFavorito.esFavorito)
+                            viewModel.alternarLugarFavorito(lugarConFavorito)
+                            val mensaje = if (!lugarConFavorito.esFavorito)
                                 R.string.anadido_favoritos
                             else
                                 R.string.eliminado_favoritos
@@ -140,14 +169,14 @@ fun ParquesContent(
 }
 
 @Composable
-fun ParqueCard(
-    parqueConFavorito: ParqueConFavorito,
+fun LugarCard(
+    lugarConFavorito: LugarConFavorito,
     onClick: () -> Unit,
     onFavoritoClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val parque = parqueConFavorito.parque
-    val urlImagen = buildImageUrl(parque.fotoUrl, context)
+    val lugar = lugarConFavorito.lugar
+    val urlImagen = buildImageUrl(lugar.fotoUrl ?: "", context)
 
     Card(
         modifier = Modifier
@@ -164,7 +193,7 @@ fun ParqueCard(
                         .data(urlImagen)
                         .crossfade(true)
                         .build(),
-                    contentDescription = parque.nombre,
+                    contentDescription = lugar.nombre,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
@@ -183,11 +212,11 @@ fun ParqueCard(
                         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
                     ) {
                         Icon(
-                            imageVector = if (parqueConFavorito.esFavorito) Icons.Filled.Favorite
+                            imageVector = if (lugarConFavorito.esFavorito) Icons.Filled.Favorite
                             else Icons.Filled.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.padding(8.dp),
-                            tint = if (parqueConFavorito.esFavorito) MaterialTheme.colorScheme.error
+                            tint = if (lugarConFavorito.esFavorito) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -196,7 +225,7 @@ fun ParqueCard(
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = parque.nombre,
+                    text = lugar.nombre,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -206,35 +235,65 @@ fun ParqueCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = RojoOscuro)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = parque.ubicacion, style = MaterialTheme.typography.bodySmall)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
-                        Text(" ${parque.valoracion}", style = MaterialTheme.typography.bodySmall)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Landscape, null, Modifier.size(16.dp), tint = MarronOscuro)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(parque.extension, style = MaterialTheme.typography.bodySmall)
-                    }
+                    Text(
+                        text = lugar.ubicacionTexto ?: "",
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = parque.informacion,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
+                        Text(" ${lugar.valoracionMedia}", style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    Chip(
+                        text = lugar.tipo.replaceFirstChar { it.uppercase() },
+                        color = when(lugar.tipo) {
+                            "restaurante" -> MaterialTheme.colorScheme.primaryContainer
+                            "parque" -> MaterialTheme.colorScheme.secondaryContainer
+                            "museo" -> MaterialTheme.colorScheme.tertiaryContainer
+                            else -> MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    )
+                }
+
+                if (!lugar.descripcion.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = lugar.descripcion,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun Chip(text: String, color: androidx.compose.ui.graphics.Color) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = color
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.labelSmall
+        )
+    }
+}
+
+fun buildImageUrl(fotoUrl: String, context: android.content.Context): String {
+    val baseUrl = context.getString(R.string.url_base_imagen)
+    return if (fotoUrl.startsWith("http", ignoreCase = true)) fotoUrl
+    else "$baseUrl$fotoUrl"
 }

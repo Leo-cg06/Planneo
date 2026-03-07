@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
 import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.model.Valoracion
 import com.leo.trailov2.ui.theme.Trailov2Theme
@@ -31,19 +30,16 @@ class VerResenasActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
-        val tipo = intent.getStringExtra("tipo") ?: ""
-        val idReferencia = intent.getIntExtra("idReferencia", 0)
+
+        val lugarId = intent.getIntExtra("lugarId", 0)
 
         setContent {
             Trailov2Theme {
                 val mainViewModel: MainViewModel = viewModel()
 
                 VerResenasContent(
-                    tipo = tipo,
-                    idReferencia = idReferencia,
+                    lugarId = lugarId,
                     viewModel = mainViewModel,
                     onBack = { finish() }
                 )
@@ -55,15 +51,14 @@ class VerResenasActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerResenasContent(
-    tipo: String,
-    idReferencia: Int,
+    lugarId: Int,
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
     val valoraciones by viewModel.valoraciones.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.cargarValoraciones(tipo, idReferencia)
+    LaunchedEffect(lugarId) {
+        viewModel.cargarValoraciones(lugarId)
     }
 
     Scaffold(
@@ -139,7 +134,11 @@ private fun ValoracionCard(valoracion: Valoracion) {
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(text = valoracion.nombreUsuario, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
-                Text(text = formatDate(valoracion.fecha), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = formatDate(valoracion.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -147,14 +146,19 @@ private fun ValoracionCard(valoracion: Valoracion) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 for (i in 1..5) {
                     Icon(
-                        imageVector = if (i <= valoracion.calificacion) Icons.Filled.Star else Icons.Filled.StarBorder,
+                        imageVector = if (i <= valoracion.puntuacion) Icons.Filled.Star else Icons.Filled.StarBorder,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = if (i <= valoracion.calificacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (i <= valoracion.puntuacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "${valoracion.calificacion.toInt()}/5", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "${valoracion.puntuacion}/5",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -164,7 +168,13 @@ private fun ValoracionCard(valoracion: Valoracion) {
     }
 }
 
-private fun formatDate(timestamp: Long): String {
-    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    return sdf.format(Date(timestamp))
+private fun formatDate(timestamp: String): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val date = sdf.parse(timestamp)
+        val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        outputFormat.format(date ?: Date())
+    } catch (e: Exception) {
+        timestamp.take(10)
+    }
 }

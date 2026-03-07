@@ -8,7 +8,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -25,42 +28,39 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
 import com.leo.trailov2.bd.SupabaseClient
+import com.leo.trailov2.model.Evento
 import com.leo.trailov2.ui.theme.Amarillo
 import com.leo.trailov2.ui.theme.RojoOscuro
 import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.MainViewModel
 
-class DetalleActividadActivity : ComponentActivity() {
+class DetalleLugarActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
-        val actividadId = intent.getIntExtra("actividadId", 0)
+
+        val lugarId = intent.getIntExtra("lugarId", 0)
 
         setContent {
             Trailov2Theme {
                 val mainViewModel: MainViewModel = viewModel()
 
-                DetalleActividadContent(
-                    actividadId = actividadId,
+                DetalleLugarContent(
+                    lugarId = lugarId,
                     viewModel = mainViewModel,
                     onBack = { finish() },
-                    onValorar = { tipo, id, nombre ->
+                    onValorar = { id, nombre ->
                         val intent = Intent(this, ValorarActivity::class.java)
-                        intent.putExtra("tipo", tipo)
-                        intent.putExtra("idReferencia", id)
+                        intent.putExtra("lugarId", id)
                         intent.putExtra("nombre", nombre)
                         startActivity(intent)
                     },
-                    onVerResenas = { tipo, id, nombre ->
+                    onVerResenas = { id, nombre ->
                         val intent = Intent(this, VerResenasActivity::class.java)
-                        intent.putExtra("tipo", tipo)
-                        intent.putExtra("idReferencia", id)
+                        intent.putExtra("lugarId", id)
                         intent.putExtra("nombre", nombre)
                         startActivity(intent)
                     }
@@ -72,37 +72,39 @@ class DetalleActividadActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetalleActividadContent(
-    actividadId: Int,
+fun DetalleLugarContent(
+    lugarId: Int,
     viewModel: MainViewModel,
     onBack: () -> Unit,
-    onValorar: (String, Int, String) -> Unit,
-    onVerResenas: (String, Int, String) -> Unit
+    onValorar: (Int, String) -> Unit,
+    onVerResenas: (Int, String) -> Unit
 ) {
-    val actividades by viewModel.actividades.collectAsState()
-    val actividadConFavorito = actividades.find { it.actividad.id == actividadId }
+    val lugares by viewModel.lugares.collectAsState()
+    val eventos by viewModel.eventos.collectAsState()
+    val lugarConFavorito = lugares.find { it.lugar.id == lugarId }
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        if (actividades.isEmpty()) {
-            viewModel.cargarActividades()
+    LaunchedEffect(lugarId) {
+        if (lugares.isEmpty()) {
+            viewModel.cargarLugares()
         }
+        viewModel.cargarEventosPorLugar(lugarId)
     }
 
-    if (actividadConFavorito == null) {
+    if (lugarConFavorito == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    val actividad = actividadConFavorito.actividad
-    val esFavorito = actividadConFavorito.esFavorito
+    val lugar = lugarConFavorito.lugar
+    val esFavorito = lugarConFavorito.esFavorito
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Actividad", maxLines = 1) },
+                title = { Text("Detalle", maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
@@ -110,7 +112,7 @@ fun DetalleActividadContent(
                 },
                 actions = {
                     IconButton(onClick = {
-                        viewModel.alternarActividadFavorito(actividadConFavorito)
+                        viewModel.alternarLugarFavorito(lugarConFavorito)
                         val mensaje = if (!esFavorito) R.string.anadido_favoritos else R.string.eliminado_favoritos
                         Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
                     }) {
@@ -132,50 +134,83 @@ fun DetalleActividadContent(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(buildImageUrl(actividad.fotoUrl, context))
+                    .data(buildImageUrl(lugar.fotoUrl, context))
                     .crossfade(true)
                     .build(),
-                contentDescription = actividad.nombre,
+                contentDescription = lugar.nombre,
                 modifier = Modifier.fillMaxWidth().height(250.dp),
                 contentScale = ContentScale.Crop
             )
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = actividad.nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(text = lugar.nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.LocationOn, null, Modifier.size(20.dp), tint = RojoOscuro)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(actividad.ubicacion, style = MaterialTheme.typography.bodyMedium)
+                    Text(lugar.ubicacionTexto, style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    StatItem(icon = Icons.Filled.Star, value = actividad.valoracion.toString(), label = stringResource(R.string.valoracion), colorIcono = Amarillo)
-                    StatItem(icon = Icons.Filled.Schedule, value = actividad.duracion, label = stringResource(R.string.duracion))
-                    StatItem(icon = Icons.Filled.Stairs, value = actividad.dificultad, label = stringResource(R.string.dificultad))
-                    StatItem(icon = Icons.Filled.Straighten, value = String.format("%.1f km", actividad.km), label = stringResource(R.string.distancia))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem(
+                        icon = Icons.Filled.Star,
+                        value = String.format("%.1f", lugar.valoracionMedia),
+                        label = stringResource(R.string.valoracion),
+                        colorIcono = Amarillo
+                    )
+                    StatItem(
+                        icon = Icons.Filled.Category,
+                        value = lugar.tipo.replaceFirstChar { it.uppercase() },
+                        label = "Tipo"
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = stringResource(R.string.informacion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = actividad.informacion, style = MaterialTheme.typography.bodyMedium)
+                if (lugar.descripcion.isNotEmpty()) {
+                    Text(
+                        text = stringResource(R.string.informacion),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = lugar.descripcion, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                // Eventos
+                if (eventos.isNotEmpty()) {
+                    Text(
+                        text = "Eventos",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    eventos.forEach { evento ->
+                        EventoCard(evento = evento)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 Button(
                     onClick = {
-                        val uri = Uri.parse("geo:${actividad.latitud},${actividad.longitud}?q=${actividad.latitud},${actividad.longitud}(${actividad.nombre})")
+                        val uri = Uri.parse("geo:${lugar.latitud},${lugar.longitud}?q=${lugar.latitud},${lugar.longitud}(${lugar.nombre})")
                         val mapIntent = Intent(Intent.ACTION_VIEW, uri)
                         mapIntent.setPackage("com.google.android.apps.maps")
                         if (mapIntent.resolveActivity(context.packageManager) != null) {
                             context.startActivity(mapIntent)
                         } else {
-                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${actividad.latitud},${actividad.longitud}"))
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${lugar.latitud},${lugar.longitud}"))
                             context.startActivity(browserIntent)
                         }
                     },
@@ -189,17 +224,51 @@ fun DetalleActividadContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { onValorar("actividad", actividad.id, actividad.nombre) }, modifier = Modifier.weight(1f)) {
+                    Button(onClick = { onValorar(lugar.id, lugar.nombre) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.Star, null, Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.valorar))
                     }
-                    Button(onClick = { onVerResenas("actividad", actividad.id, actividad.nombre) }, modifier = Modifier.weight(1f)) {
+                    Button(onClick = { onVerResenas(lugar.id, lugar.nombre) }, modifier = Modifier.weight(1f)) {
                         Icon(Icons.Filled.RateReview, null, Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.ver_resenas))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun EventoCard(evento: Evento) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = evento.nombre,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (evento.descripcion.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = evento.descripcion,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Event, null, Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = evento.fechaInicio.take(10), // Solo la fecha
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }

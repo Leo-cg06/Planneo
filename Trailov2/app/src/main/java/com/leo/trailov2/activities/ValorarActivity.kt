@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
+import com.leo.trailov2.bd.AuthenticationRepositoryImpl
 import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.model.Valoracion
 import com.leo.trailov2.ui.theme.Trailov2Theme
@@ -31,11 +31,8 @@ class ValorarActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
-        val tipo = intent.getStringExtra("tipo") ?: ""
-        val idReferencia = intent.getIntExtra("idReferencia", 0)
+        val lugarId = intent.getIntExtra("lugarId", 0)
         val nombre = intent.getStringExtra("nombre") ?: ""
 
         setContent {
@@ -43,8 +40,7 @@ class ValorarActivity : ComponentActivity() {
                 val mainViewModel: MainViewModel = viewModel()
 
                 ValorarContent(
-                    tipo = tipo,
-                    idReferencia = idReferencia,
+                    lugarId = lugarId,
                     nombre = nombre,
                     viewModel = mainViewModel,
                     onBack = { finish() }
@@ -57,16 +53,16 @@ class ValorarActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ValorarContent(
-    tipo: String,
-    idReferencia: Int,
+    lugarId: Int,
     nombre: String,
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
     var nombreUsuario by remember { mutableStateOf("") }
     var comentario by remember { mutableStateOf("") }
-    var calificacion by remember { mutableFloatStateOf(0f) }
+    var puntuacion by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
+    val userId = AuthenticationRepositoryImpl.getCurrentUserId()
 
     Scaffold(
         topBar = {
@@ -100,18 +96,18 @@ fun ValorarContent(
 
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 for (i in 1..5) {
-                    IconButton(onClick = { calificacion = i.toFloat() }) {
+                    IconButton(onClick = { puntuacion = i }) {
                         Icon(
-                            imageVector = if (i <= calificacion) Icons.Filled.Star else Icons.Filled.StarBorder,
+                            imageVector = if (i <= puntuacion) Icons.Filled.Star else Icons.Filled.StarBorder,
                             contentDescription = "Estrella $i",
                             modifier = Modifier.size(40.dp),
-                            tint = if (i <= calificacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = if (i <= puntuacion) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
 
-            Text(text = "${calificacion.toInt()}/5", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+            Text(text = "$puntuacion/5", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -146,15 +142,15 @@ fun ValorarContent(
                         comentario.isBlank() -> {
                             Toast.makeText(context, context.getString(R.string.error_comentario_vacio), Toast.LENGTH_SHORT).show()
                         }
-                        calificacion == 0f -> {
+                        puntuacion == 0 -> {
                             Toast.makeText(context, context.getString(R.string.error_sin_valoracion), Toast.LENGTH_SHORT).show()
                         }
                         else -> {
                             val valoracion = Valoracion(
-                                tipo = tipo,
-                                idReferencia = idReferencia,
+                                lugarId = lugarId,
+                                userId = userId,
                                 nombreUsuario = nombreUsuario.trim(),
-                                calificacion = calificacion,
+                                puntuacion = puntuacion,
                                 comentario = comentario.trim()
                             )
                             viewModel.insertValoracion(

@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -26,18 +27,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
-import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.AuthViewModel
+import com.leo.trailov2.viewmodel.LoginState
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
         setContent {
             Trailov2Theme {
@@ -46,8 +43,7 @@ class LoginActivity : ComponentActivity() {
                 LoginContent(
                     viewModel = authViewModel,
                     onLoginSuccess = {
-                        val intent = Intent(this, ActividadesActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        val intent = Intent(this, LugaresActivity::class.java)
                         startActivity(intent)
                         finish()
                     },
@@ -71,18 +67,19 @@ fun LoginContent(
     var contrasena by remember { mutableStateOf("") }
     var contrasenaVisible by remember { mutableStateOf(false) }
 
-    val state by viewModel.state.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            val mensaje = when (error) {
-                "error_campos_vacios" -> context.getString(R.string.error_campos_vacios)
-                "error_credenciales" -> context.getString(R.string.error_credenciales)
-                else -> error
+    LaunchedEffect(loginState) {
+        when (val state = loginState) {
+            is LoginState.Success -> {
+                onLoginSuccess()
+                viewModel.resetState()
             }
-            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
-            viewModel.clearError()
+            is LoginState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
         }
     }
 
@@ -92,12 +89,12 @@ fun LoginContent(
             .verticalScroll(rememberScrollState())
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        verticalArrangement = Arrangement.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.trailologo),
+            painter = painterResource(id = R.drawable.planneologo),
             contentDescription = "Logo de la app",
-            modifier = Modifier.size(400.dp)
+            modifier = Modifier.size(300.dp)
         )
 
         OutlinedTextField(
@@ -107,7 +104,8 @@ fun LoginContent(
             leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            singleLine = true
+            singleLine = true,
+            isError = loginState is LoginState.Error
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -130,24 +128,21 @@ fun LoginContent(
             visualTransformation = if (contrasenaVisible) VisualTransformation.None
             else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
+            singleLine = true,
+            isError = loginState is LoginState.Error
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Button(
-            onClick = { viewModel.login(correo, contrasena, onLoginSuccess) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            enabled = !state.cargando
-        ) {
-            if (state.cargando) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
+        if (loginState is LoginState.Loading) {
+            CircularProgressIndicator()
+        } else {
+            Button(
+                onClick = { viewModel.signIn(correo, contrasena) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
                 Text(stringResource(R.string.iniciar_sesion))
             }
         }

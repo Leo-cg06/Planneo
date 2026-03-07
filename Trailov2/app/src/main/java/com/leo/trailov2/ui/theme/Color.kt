@@ -2,24 +2,24 @@ package com.leo.trailov2.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val VerdePrimario = Color(0xFF2E7D32)
-val VerdePrimarioOscuro = Color(0xFF005005)
+val AzulPrimario = Color(0xFF1976D2)
+val AzulPrimarioOscuro = Color(0xFF004BA0)
 
-val VerdeSecundario = Color(0xFF66BB6A)
-val VerdeSecundarioClaro = Color(0xFF98EE99)
-val VerdeSecundarioOscuro = Color(0xFF338A3E)
+val AzulSecundario = Color(0xFF42A5F5)
+val AzulSecundarioClaro = Color(0xFF80D6FF)
+val AzulSecundarioOscuro = Color(0xFF0077C2)
 
-val VerdeTerciario = Color(0xFF00897B)
-val VerdeTerciarioClaro = Color(0xFF4DB6AC)
-val VerdeTerciarioOscuro = Color(0xFF00695C)
+val AzulTerciario = Color(0xFF0097A7)
+val AzulTerciarioClaro = Color(0xFF56C8D8)
+val AzulTerciarioOscuro = Color(0xFF006978)
 
-val FondoClaro = Color(0xFFF1F8F4)
+val FondoClaro = Color(0xFFF5F9FF)
 val SuperficieClara = Color(0xFFFFFFFF)
-val FondoTarjetaClara = Color(0xFFE8F5E9)
+val FondoTarjetaClara = Color(0xFFE3F2FD)
 
 val FondoOscuro = Color(0xFF1B1B1B)
 val SuperficieOscura = Color(0xFF2C2C2C)
-val FondoTarjetaOscura = Color(0xFF1E3A1E)
+val FondoTarjetaOscura = Color(0xFF1A2332)
 
 val Blanco = Color(0xFFFFFFFF)
 val Negro = Color(0xFF000000)
@@ -33,7 +33,7 @@ val RojoOscuro = Color(0xFFC62828)
 
 val Amarillo = Color(0xFFFBC02D)
 
-val VerdeExito = Color(0xFF388E3C)
-val VerdeExitoClaro = Color(0xFF66BB6A)
+val AzulExito = Color(0xFF1E88E5)
+val AzulExitoClaro = Color(0xFF64B5F6)
 
-val MarronOscuro = Color(0xFF4E342E)
+val AzulOscuroInfo = Color(0xFF283593)

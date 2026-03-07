@@ -23,18 +23,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leo.trailov2.R
-import com.leo.trailov2.bd.AuthRepositoryImpl
-import com.leo.trailov2.bd.SupabaseClient
 import com.leo.trailov2.ui.theme.Trailov2Theme
 import com.leo.trailov2.viewmodel.AuthViewModel
+import com.leo.trailov2.viewmodel.LoginState
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        SupabaseClient.init(this)
-        AuthRepositoryImpl.init(this)
 
         setContent {
             Trailov2Theme {
@@ -62,29 +58,20 @@ fun RegisterContent(
     var confirmcontrasena by remember { mutableStateOf("") }
     var contrasenaVisible by remember { mutableStateOf(false) }
 
-    val state by viewModel.state.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            val mensaje = when (error) {
-                "error_campos_vacios" -> context.getString(R.string.error_campos_vacios)
-                "error_correo_invalido" -> context.getString(R.string.error_correo_invalido)
-                "error_contrasena_corta" -> context.getString(R.string.error_contrasena_corta)
-                "error_contrasenas_no_coinciden" -> context.getString(R.string.error_contrasenas_no_coinciden)
-                "error_registro" -> context.getString(R.string.error_registro)
-                else -> error
+    LaunchedEffect(loginState) {
+        when (val state = loginState) {
+            is LoginState.Success -> {
+                Toast.makeText(context, context.getString(R.string.exito_registro), Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+                onRegisterSuccess()
             }
-            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
-            viewModel.clearError()
-        }
-    }
-
-    LaunchedEffect(state.mesnajeExito) {
-        state.mesnajeExito?.let {
-            Toast.makeText(context, context.getString(R.string.exito_registro), Toast.LENGTH_LONG).show()
-            viewModel.clearSuccessMessage()
-            onRegisterSuccess()
+            is LoginState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
         }
     }
 
@@ -124,7 +111,8 @@ fun RegisterContent(
                 leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true
+                singleLine = true,
+                isError = loginState is LoginState.Error
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -147,7 +135,8 @@ fun RegisterContent(
                 visualTransformation = if (contrasenaVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
+                isError = loginState is LoginState.Error
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -161,24 +150,33 @@ fun RegisterContent(
                 visualTransformation = if (contrasenaVisible) VisualTransformation.None
                 else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
+                isError = loginState is LoginState.Error
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = { viewModel.register(correo, contrasena, confirmcontrasena) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                enabled = !state.cargando
-            ) {
-                if (state.cargando) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
+            if (loginState is LoginState.Loading) {
+                CircularProgressIndicator()
+            } else {
+                Button(
+                    onClick = {
+                        when {
+                            correo.isBlank() || contrasena.isBlank() || confirmcontrasena.isBlank() -> {
+                                Toast.makeText(context, context.getString(R.string.error_campos_vacios), Toast.LENGTH_SHORT).show()
+                            }
+                            contrasena != confirmcontrasena -> {
+                                Toast.makeText(context, context.getString(R.string.error_contrasenas_no_coinciden), Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                viewModel.signUp(correo, contrasena)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
                     Text(stringResource(R.string.registrarse))
                 }
             }
