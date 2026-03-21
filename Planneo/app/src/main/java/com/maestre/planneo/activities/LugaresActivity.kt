@@ -19,17 +19,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.maestre.planneo.activitiess.DetalleLugarActivity
 import com.maestre.planneo.components.BottomNavBar
+import com.maestre.planneo.components.LugarAsyncImage
 import com.maestre.planneo.model.LugarConFavorito
 import com.maestre.planneo.ui.theme.Amarillo
 import com.maestre.planneo.ui.theme.RojoOscuro
@@ -188,18 +185,7 @@ fun LugarCard(
     ) {
         Column {
             Box {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(urlImagen)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = lugar.nombre,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                    contentScale = ContentScale.Crop
-                )
+                LugarAsyncImage(urlImagen, lugar)
 
                 IconButton(
                     onClick = onFavoritoClick,
