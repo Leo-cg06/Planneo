@@ -1,5 +1,6 @@
 package com.maestre.planneo.components
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,15 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -102,80 +96,6 @@ fun LoginContent(
             Text(stringResource(R.string.no_tienes_cuenta))
         }
     }
-}
-
-@Composable
-fun LoginInputForm(
-    correo: String,
-    onCorreoChange: (String) -> Unit,
-    contrasena: String,
-    onContrasenaChange: (String) -> Unit,
-    contrasenaVisible: Boolean,
-    onContrasenaVisibleChange: (Boolean) -> Unit,
-    loginState: LoginState
-) {
-    CorreoInputForm(
-        correo,
-        onCorreoChange,
-        loginState)
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    ContrasenaInputForm(
-        contrasena,
-        onContrasenaChange,
-        contrasenaVisible,
-        onContrasenaVisibleChange,
-        loginState
-    )
-}
-
-@Composable
-fun CorreoInputForm(
-    correo: String,
-    onCorreoChange: (String) -> Unit,
-    loginState: LoginState) {
-    OutlinedTextField(
-        value = correo,
-        onValueChange = { onCorreoChange(it) },
-        label = { Text(stringResource(R.string.correo_electronico)) },
-        leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-        modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-        singleLine = true,
-        isError = loginState is LoginState.Error
-    )
-}
-
-@Composable
-fun ContrasenaInputForm(
-    contrasena: String,
-    onContrasenaChange: (String) -> Unit,
-    contrasenaVisible: Boolean,
-    onContrasenaVisibleChange: (Boolean) -> Unit,
-    loginState: LoginState
-) {
-    OutlinedTextField(
-        value = contrasena,
-        onValueChange = { onContrasenaChange(it) },
-        label = { Text(stringResource(R.string.contrasena)) },
-        leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
-        trailingIcon = {
-            IconButton(onClick = { onContrasenaVisibleChange(!contrasenaVisible) }) {
-                Icon(
-                    imageVector = if (contrasenaVisible) Icons.Filled.VisibilityOff
-                    else Icons.Filled.Visibility,
-                    contentDescription = null
-                )
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        visualTransformation = if (contrasenaVisible) VisualTransformation.None
-        else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        singleLine = true,
-        isError = loginState is LoginState.Error
-    )
 }
 
 @Composable
