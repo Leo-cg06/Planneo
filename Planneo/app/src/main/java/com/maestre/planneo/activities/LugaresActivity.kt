@@ -26,10 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maestre.planneo.activitiess.DetalleLugarActivity
 import com.maestre.planneo.components.BottomNavBar
+import com.maestre.planneo.components.FavoritoIcon
 import com.maestre.planneo.components.LugarAsyncImage
+import com.maestre.planneo.components.ChipTipo
+import com.maestre.planneo.components.IndicadorCargando
+import com.maestre.planneo.components.LocationOffIcon
+import com.maestre.planneo.components.LocationOnIcon
+import com.maestre.planneo.model.Lugar
 import com.maestre.planneo.model.LugarConFavorito
 import com.maestre.planneo.ui.theme.Amarillo
-import com.maestre.planneo.ui.theme.RojoOscuro
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 
@@ -74,7 +79,6 @@ fun LugaresContent(
     val lugares by viewModel.lugares.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val context = LocalContext.current
 
     Log.d("LugaresContent", "Lugares: ${lugares.size}, Cargando: $cargando")
 
@@ -95,72 +99,14 @@ fun LugaresContent(
         )
 
         // Buscador
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { viewModel.buscarLugares(it) }, // Sin tipo
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            placeholder = { Text(stringResource(R.string.buscar)) },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.buscarLugares("") }) {
-                        Icon(Icons.Filled.Clear, contentDescription = null)
-                    }
-                }
-            },
-            singleLine = true,
-            shape = RoundedCornerShape(24.dp)
-        )
+        Buscador(searchQuery, viewModel)
 
         if (cargando) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            IndicadorCargando()
         } else if (lugares.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOff,
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "No hay lugares disponibles",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            LugaresEmptyBox()
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(lugares, key = { it.lugar.id }) { lugarConFavorito ->
-                    LugarCard(
-                        lugarConFavorito = lugarConFavorito,
-                        onClick = { onLugarClick(lugarConFavorito) },
-                        onFavoritoClick = {
-                            viewModel.alternarLugarFavorito(lugarConFavorito)
-                            val mensaje = if (!lugarConFavorito.esFavorito)
-                                R.string.anadido_favoritos
-                            else
-                                R.string.eliminado_favoritos
-                            Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-            }
+            LugarLazyColumn(lugares, onLugarClick, viewModel)
         }
     }
 }
@@ -184,97 +130,169 @@ fun LugarCard(
         shape = RoundedCornerShape(12.dp)
     ) {
         Column {
-            Box {
-                LugarAsyncImage(urlImagen, lugar)
+            LugarImageBox(urlImagen, lugar, onFavoritoClick, lugarConFavorito)
 
-                IconButton(
-                    onClick = onFavoritoClick,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
-                    ) {
-                        Icon(
-                            imageVector = if (lugarConFavorito.esFavorito) Icons.Filled.Favorite
-                            else Icons.Filled.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.padding(8.dp),
-                            tint = if (lugarConFavorito.esFavorito) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = lugar.nombre,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = RojoOscuro)
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = lugar.ubicacionTexto ?: "",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
-                        Text(" ${lugar.valoracionMedia}", style = MaterialTheme.typography.bodySmall)
-                    }
-
-                    Chip(
-                        text = lugar.tipo.replaceFirstChar { it.uppercase() },
-                        color = when(lugar.tipo) {
-                            "restaurante" -> MaterialTheme.colorScheme.primaryContainer
-                            "parque" -> MaterialTheme.colorScheme.secondaryContainer
-                            "museo" -> MaterialTheme.colorScheme.tertiaryContainer
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        }
-                    )
-                }
-
-                if (!lugar.descripcion.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = lugar.descripcion,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2
-                    )
-                }
-            }
+            LugarDatos(lugar)
         }
     }
 }
 
 @Composable
-fun Chip(text: String, color: androidx.compose.ui.graphics.Color) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = color
+fun InfoValoracion(lugar: Lugar) {
+    Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
+    Text(" ${lugar.valoracionMedia}", style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+fun Buscador(searchQuery: String, viewModel: MainViewModel) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = { viewModel.buscarLugares(it) }, // Sin tipo
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = { Text(stringResource(R.string.buscar)) },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+        trailingIcon = {
+            if (searchQuery.isNotEmpty()) {
+                IconButton(onClick = { viewModel.buscarLugares("") }) {
+                    Icon(Icons.Filled.Clear, contentDescription = null)
+                }
+            }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@Composable
+fun LugaresEmptyBox(){
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelSmall
-        )
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            LocationOffIcon()
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "No hay lugares disponibles",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun LugarLazyColumn(
+    lugares: List<LugarConFavorito>,
+    onLugarClick: (LugarConFavorito) -> Unit,
+    viewModel: MainViewModel
+) {
+    val context = LocalContext.current
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 16.dp)
+    ) {
+        items(lugares, key = { it.lugar.id }) { lugarConFavorito ->
+            LugarCard(
+                lugarConFavorito = lugarConFavorito,
+                onClick = { onLugarClick(lugarConFavorito) },
+                onFavoritoClick = {
+                    viewModel.alternarLugarFavorito(lugarConFavorito)
+                    val mensaje = if (!lugarConFavorito.esFavorito)
+                        R.string.anadido_favoritos
+                    else
+                        R.string.eliminado_favoritos
+                    Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun LugarImageBox(
+    urlImagen: String,
+    lugar: Lugar,
+    onFavoritoClick: () -> Unit,
+    lugarConFavorito: LugarConFavorito
+) {
+    Box {
+        LugarAsyncImage(urlImagen, lugar)
+
+        IconButton(
+            onClick = onFavoritoClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+        ) {
+            FavoritoIcon(lugarConFavorito)
+        }
+    }
+}
+
+@Composable
+fun LugarNombre(lugar: Lugar) {
+    Text(
+        text = lugar.nombre,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold
+    )
+}
+
+@Composable
+fun LugarUbicacion(lugar: Lugar) {
+    Text(
+        text = lugar.ubicacionTexto,
+        style = MaterialTheme.typography.bodySmall
+    )
+}
+
+@Composable
+fun LugarDescripcion(
+    lugar: Lugar
+){
+    Text(
+        text = lugar.descripcion,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 2
+    )
+}
+
+@Composable
+fun LugarDatos(lugar: Lugar) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        LugarNombre(lugar)
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            LocationOnIcon()
+            Spacer(modifier = Modifier.width(4.dp))
+            LugarUbicacion(lugar)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                InfoValoracion(lugar)
+            }
+
+            ChipTipo(lugar)
+        }
+
+        if (lugar.descripcion.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            LugarDescripcion(lugar)
+        }
     }
 }
 

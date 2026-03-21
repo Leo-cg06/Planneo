@@ -28,9 +28,10 @@ import coil.request.ImageRequest
 import com.maestre.planneo.activities.ValorarActivity
 import com.maestre.planneo.activities.VerResenasActivity
 import com.maestre.planneo.activities.buildImageUrl
+import com.maestre.planneo.components.IndicadorCargando
+import com.maestre.planneo.components.LocationOnIcon
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.ui.theme.Amarillo
-import com.maestre.planneo.ui.theme.RojoOscuro
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 
@@ -91,9 +92,7 @@ fun DetalleLugarContent(
     }
 
     if (lugarConFavorito == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        IndicadorCargando()
         return
     }
 
@@ -147,7 +146,7 @@ fun DetalleLugarContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocationOn, null, Modifier.size(20.dp), tint = RojoOscuro)
+                    LocationOnIcon()
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(lugar.ubicacionTexto, style = MaterialTheme.typography.bodyMedium)
                 }

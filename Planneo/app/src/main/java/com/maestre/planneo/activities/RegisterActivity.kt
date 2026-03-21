@@ -19,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,13 +116,8 @@ fun RegisterContent(
                 {confirmcontrasena = it},
                 contrasenaVisible,
                 { contrasenaVisible = it },
+                onNavigateBack
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(onClick = onNavigateBack) {
-                Text(stringResource(R.string.ya_tienes_cuenta))
-            }
         }
     }
 }

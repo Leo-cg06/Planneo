@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.maestre.planneo.components.BottomNavBar
+import com.maestre.planneo.components.IndicadorCargando
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
@@ -138,12 +139,7 @@ fun EventosContent(
         }
 
         if (cargando) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            IndicadorCargando()
         } else if (eventos.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),

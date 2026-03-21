@@ -26,6 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.maestre.planneo.activitiess.DetalleLugarActivity
+import com.maestre.planneo.components.IndicadorCargando
+import com.maestre.planneo.components.LocationOnIcon
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
@@ -81,9 +83,7 @@ fun DetalleEventoContent(
     }
 
     if (evento == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        IndicadorCargando()
         return
     }
 
@@ -268,12 +268,14 @@ fun DetalleEventoContent(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Filled.LocationOn,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                                LocationOnIcon()
+                                //Lo dejo comentado porque el color varía un poco y quiero ver si se nota
+//                                Icon(
+//                                    Icons.Filled.LocationOn,
+//                                    contentDescription = null,
+//                                    modifier = Modifier.size(16.dp),
+//                                    tint = MaterialTheme.colorScheme.primary
+//                                )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = lugar.lugar.ubicacionTexto,

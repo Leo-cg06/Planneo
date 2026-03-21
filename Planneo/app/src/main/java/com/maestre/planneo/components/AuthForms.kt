@@ -9,6 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,8 +34,11 @@ fun LoginInputForm(
     onContrasenaChange: (String) -> Unit,
     contrasenaVisible: Boolean,
     onContrasenaVisibleChange: (Boolean) -> Unit,
-    loginState: LoginState
+    loginState: LoginState,
+    onNavigateToRegister: () -> Unit
 ) {
+    val authViewModel: AuthViewModel = viewModel()
+
     CorreoInputForm(
         correo,
         onCorreoChange,
@@ -49,6 +53,20 @@ fun LoginInputForm(
         onContrasenaVisibleChange,
         loginState
     )
+
+    Spacer(modifier = Modifier.height(32.dp))
+
+    if (loginState is LoginState.Loading) {
+        CircularProgressIndicator()
+    } else {
+        ButtonIniciarSesion(authViewModel, correo, contrasena)
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    TextButton(onClick = onNavigateToRegister) {
+        Text(stringResource(R.string.no_tienes_cuenta))
+    }
 }
 
 @Composable
@@ -123,6 +141,7 @@ fun RegisterForm(
     onConfirmContrasenaChange: (String) -> Unit,
     contrasenaVisible: Boolean,
     onContrasenaVisibleChange: (Boolean) -> Unit,
+    onNavigateBack: () -> Unit,
 ) {
     val authViewModel: AuthViewModel = viewModel()
     val loginState by authViewModel.loginState.collectAsState()
@@ -157,6 +176,12 @@ fun RegisterForm(
         CircularProgressIndicator()
     } else {
         RegisterButton(correo, contrasena, confirmcontrasena, authViewModel)
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    TextButton(onClick = onNavigateBack) {
+        Text(stringResource(R.string.ya_tienes_cuenta))
     }
 }
 
