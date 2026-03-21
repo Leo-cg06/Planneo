@@ -78,18 +78,13 @@ fun LoginContent(
     ) {
         AppLogo()
 
-        CorreoInputForm(
+        LoginInputForm(
             correo,
             {correo = it},
-            loginState)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ContrasenaInputForm(
             contrasena,
-            onContrasenaChange = {contrasena = it},
+            {contrasena = it},
             contrasenaVisible,
-            onContrasenaVisibleChange = {contrasenaVisible = it},
+            { contrasenaVisible = it },
             loginState
         )
 
@@ -107,6 +102,32 @@ fun LoginContent(
             Text(stringResource(R.string.no_tienes_cuenta))
         }
     }
+}
+
+@Composable
+fun LoginInputForm(
+    correo: String,
+    onCorreoChange: (String) -> Unit,
+    contrasena: String,
+    onContrasenaChange: (String) -> Unit,
+    contrasenaVisible: Boolean,
+    onContrasenaVisibleChange: (Boolean) -> Unit,
+    loginState: LoginState
+) {
+    CorreoInputForm(
+        correo,
+        onCorreoChange,
+        loginState)
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    ContrasenaInputForm(
+        contrasena,
+        onContrasenaChange,
+        contrasenaVisible,
+        onContrasenaVisibleChange,
+        loginState
+    )
 }
 
 @Composable
