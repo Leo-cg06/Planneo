@@ -26,12 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maestre.planneo.activitiess.DetalleLugarActivity
 import com.maestre.planneo.components.BottomNavBar
+import com.maestre.planneo.components.Buscador
 import com.maestre.planneo.components.FavoritoIcon
 import com.maestre.planneo.components.LugarAsyncImage
 import com.maestre.planneo.components.ChipTipo
 import com.maestre.planneo.components.IndicadorCargando
 import com.maestre.planneo.components.LocationOffIcon
 import com.maestre.planneo.components.LocationOnIcon
+import com.maestre.planneo.components.LugarLazyColumn
+import com.maestre.planneo.components.LugaresEmptyBox
 import com.maestre.planneo.model.Lugar
 import com.maestre.planneo.model.LugarConFavorito
 import com.maestre.planneo.ui.theme.Amarillo
@@ -107,191 +110,6 @@ fun LugaresContent(
             LugaresEmptyBox()
         } else {
             LugarLazyColumn(lugares, onLugarClick, viewModel)
-        }
-    }
-}
-
-@Composable
-fun LugarCard(
-    lugarConFavorito: LugarConFavorito,
-    onClick: () -> Unit,
-    onFavoritoClick: () -> Unit
-) {
-    val context = LocalContext.current
-    val lugar = lugarConFavorito.lugar
-    val urlImagen = buildImageUrl(lugar.fotoUrl ?: "", context)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(4.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column {
-            LugarImageBox(urlImagen, lugar, onFavoritoClick, lugarConFavorito)
-
-            LugarDatos(lugar)
-        }
-    }
-}
-
-@Composable
-fun InfoValoracion(lugar: Lugar) {
-    Icon(Icons.Filled.Star, null, Modifier.size(16.dp), tint = Amarillo)
-    Text(" ${lugar.valoracionMedia}", style = MaterialTheme.typography.bodySmall)
-}
-
-@Composable
-fun Buscador(searchQuery: String, viewModel: MainViewModel) {
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = { viewModel.buscarLugares(it) }, // Sin tipo
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        placeholder = { Text(stringResource(R.string.buscar)) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = {
-            if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { viewModel.buscarLugares("") }) {
-                    Icon(Icons.Filled.Clear, contentDescription = null)
-                }
-            }
-        },
-        singleLine = true,
-        shape = RoundedCornerShape(24.dp)
-    )
-}
-
-@Composable
-fun LugaresEmptyBox(){
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            LocationOffIcon()
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "No hay lugares disponibles",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-fun LugarLazyColumn(
-    lugares: List<LugarConFavorito>,
-    onLugarClick: (LugarConFavorito) -> Unit,
-    viewModel: MainViewModel
-) {
-    val context = LocalContext.current
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 16.dp)
-    ) {
-        items(lugares, key = { it.lugar.id }) { lugarConFavorito ->
-            LugarCard(
-                lugarConFavorito = lugarConFavorito,
-                onClick = { onLugarClick(lugarConFavorito) },
-                onFavoritoClick = {
-                    viewModel.alternarLugarFavorito(lugarConFavorito)
-                    val mensaje = if (!lugarConFavorito.esFavorito)
-                        R.string.anadido_favoritos
-                    else
-                        R.string.eliminado_favoritos
-                    Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun LugarImageBox(
-    urlImagen: String,
-    lugar: Lugar,
-    onFavoritoClick: () -> Unit,
-    lugarConFavorito: LugarConFavorito
-) {
-    Box {
-        LugarAsyncImage(urlImagen, lugar)
-
-        IconButton(
-            onClick = onFavoritoClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-        ) {
-            FavoritoIcon(lugarConFavorito)
-        }
-    }
-}
-
-@Composable
-fun LugarNombre(lugar: Lugar) {
-    Text(
-        text = lugar.nombre,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold
-    )
-}
-
-@Composable
-fun LugarUbicacion(lugar: Lugar) {
-    Text(
-        text = lugar.ubicacionTexto,
-        style = MaterialTheme.typography.bodySmall
-    )
-}
-
-@Composable
-fun LugarDescripcion(
-    lugar: Lugar
-){
-    Text(
-        text = lugar.descripcion,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 2
-    )
-}
-
-@Composable
-fun LugarDatos(lugar: Lugar) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        LugarNombre(lugar)
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LocationOnIcon()
-            Spacer(modifier = Modifier.width(4.dp))
-            LugarUbicacion(lugar)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                InfoValoracion(lugar)
-            }
-
-            ChipTipo(lugar)
-        }
-
-        if (lugar.descripcion.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            LugarDescripcion(lugar)
         }
     }
 }
