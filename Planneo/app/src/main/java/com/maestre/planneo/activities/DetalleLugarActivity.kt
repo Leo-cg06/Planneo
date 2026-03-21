@@ -1,4 +1,4 @@
-package com.maestre.planneo.activities
+package com.maestre.planneo.activitiess
 
 import com.maestre.planneo.R
 import android.content.Intent
@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.maestre.planneo.activities.ValorarActivity
+import com.maestre.planneo.activities.VerResenasActivity
+import com.maestre.planneo.activities.buildImageUrl
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.ui.theme.Amarillo
 import com.maestre.planneo.ui.theme.RojoOscuro

@@ -1,4 +1,4 @@
-package com.maestre.planneo.bd
+package com.maestre.planneo.db
 
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth

@@ -1,4 +1,4 @@
-package com.maestre.planneo.bd
+package com.maestre.planneo.db
 
 import android.util.Log
 import com.maestre.planneo.model.Evento

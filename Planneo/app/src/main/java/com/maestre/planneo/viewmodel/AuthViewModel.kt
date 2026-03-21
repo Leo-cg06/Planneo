@@ -4,8 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.maestre.planneo.bd.AuthenticationRepository
-import com.maestre.planneo.bd.AuthenticationRepositoryImpl
+import com.maestre.planneo.db.AuthenticationRepository
+import com.maestre.planneo.db.AuthenticationRepositoryImpl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

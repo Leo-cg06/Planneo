@@ -1,6 +1,5 @@
 package com.maestre.planneo.activities
 
-import com.maestre.planneo.R
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity

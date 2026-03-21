@@ -3,7 +3,7 @@ package com.maestre.planneo
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import com.maestre.planneo.bd.AuthenticationRepositoryImpl
+import com.maestre.planneo.db.AuthenticationRepositoryImpl
 import com.maestre.planneo.activities.LugaresActivity
 import com.maestre.planneo.activities.WelcomeActivity
 

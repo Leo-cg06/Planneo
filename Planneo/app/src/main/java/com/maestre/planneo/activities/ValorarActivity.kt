@@ -20,7 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.maestre.planneo.bd.AuthenticationRepositoryImpl
+import com.maestre.planneo.db.AuthenticationRepositoryImpl
 import com.maestre.planneo.model.Valoracion
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel

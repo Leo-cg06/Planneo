@@ -1,4 +1,4 @@
-package com.maestre.planneo.bd
+package com.maestre.planneo.db
 
 interface AuthenticationRepository {
 

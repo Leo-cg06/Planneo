@@ -3,17 +3,17 @@ package com.maestre.planneo.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.maestre.planneo.bd.EventoRepository
-import com.maestre.planneo.bd.FavoritoRepository
-import com.maestre.planneo.bd.LugarRepository
-import com.maestre.planneo.bd.ValoracionRepository
+import com.maestre.planneo.db.EventoRepository
+import com.maestre.planneo.db.FavoritoRepository
+import com.maestre.planneo.db.LugarRepository
+import com.maestre.planneo.db.ValoracionRepository
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.model.LugarConFavorito
 import com.maestre.planneo.model.Valoracion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.maestre.planneo.bd.AuthenticationRepositoryImpl
+import com.maestre.planneo.db.AuthenticationRepositoryImpl
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
