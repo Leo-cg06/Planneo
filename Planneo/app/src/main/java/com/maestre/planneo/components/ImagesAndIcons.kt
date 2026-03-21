@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -33,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -82,7 +86,8 @@ fun ShowPasswordIcon(contrasenaVisible: Boolean, onContrasenaVisibleChange: (Boo
 }
 
 @Composable
-fun LugarAsyncImage(urlImagen: String, lugar: Lugar) {
+fun LugarAsyncImage(urlImagen: String = lugar.fotoUrl,
+                    lugar: Lugar) {
     val context = LocalContext.current
 
     AsyncImage(
@@ -158,4 +163,21 @@ fun LocationOnIcon(){
         null,
         Modifier.size(16.dp),
         tint = RojoOscuro)
+}
+
+@Composable
+fun ArrowBackIconButton(onBack: () -> Unit) {
+    IconButton(onClick = onBack) {
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+    }
+}
+
+@Composable
+fun MapIcon(){
+    Icon(Icons.Filled.Map, null, Modifier.size(18.dp))
+}
+
+@Composable
+fun EventIcon(){
+    Icon(Icons.Filled.Event, null, Modifier.size(16.dp))
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.maestre.planneo.components.ArrowBackIconButton
 import com.maestre.planneo.model.Valoracion
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
@@ -66,7 +67,7 @@ fun VerResenasContent(
                 title = { Text(stringResource(R.string.resena), maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
+                        ArrowBackIconButton(onBack)
                     }
                 }
             )
