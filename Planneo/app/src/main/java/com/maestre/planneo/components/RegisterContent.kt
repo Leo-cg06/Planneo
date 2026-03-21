@@ -117,35 +117,3 @@ fun RegisterTopApp(onNavigateBack: () -> Unit) {
         }
     )
 }
-
-@Composable
-fun RegisterButton(
-    correo: String,
-    contrasena: String,
-    confirmcontrasena: String,
-    viewModel: AuthViewModel
-) {
-    val context = LocalContext.current
-    val resources = LocalResources.current
-
-    Button(
-        onClick = {
-            when {
-                correo.isBlank() || contrasena.isBlank() || confirmcontrasena.isBlank() -> {
-                    Toast.makeText(context, resources.getString(R.string.error_campos_vacios), Toast.LENGTH_SHORT).show()
-                }
-                contrasena != confirmcontrasena -> {
-                    Toast.makeText(context, resources.getString(R.string.error_contrasenas_no_coinciden), Toast.LENGTH_SHORT).show()
-                }
-                else -> {
-                    viewModel.signUp(correo, contrasena)
-                }
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-    ) {
-        Text(stringResource(R.string.registrarse))
-    }
-}

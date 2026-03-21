@@ -98,17 +98,3 @@ fun LoginContent(
     }
 }
 
-@Composable
-fun ButtonIniciarSesion(
-    viewModel: AuthViewModel,
-    correo: String,
-    contrasena: String) {
-    Button(
-        onClick = { viewModel.signIn(correo, contrasena) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-    ) {
-        Text(stringResource(R.string.iniciar_sesion))
-    }
-}
