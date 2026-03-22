@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,7 +32,7 @@ import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
-
+import com.maestre.planneo.R
 class EventoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,7 +115,7 @@ fun EventosContent(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (mostrarSoloProximos) "Próximos eventos" else "Todos los eventos",
+                            text = if (mostrarSoloProximos) stringResource( R.string.proximo_eventos) else stringResource(R.string.todos_eventos),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -124,7 +125,7 @@ fun EventosContent(
                         selected = mostrarSoloProximos,
                         onClick = { mostrarSoloProximos = !mostrarSoloProximos },
                         label = {
-                            Text(if (mostrarSoloProximos) "Próximos" else "Todos")
+                            Text(if (mostrarSoloProximos) stringResource(R.string.proximo) else stringResource(R.string.todos))
                         },
                         leadingIcon = {
                             Icon(
@@ -154,7 +155,7 @@ fun EventosContent(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "No hay eventos disponibles",
+                        text = stringResource(R.string.eventos_no_disponibles),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,7 +171,7 @@ fun EventosContent(
                     val lugar = lugares.find { it.lugar.id == evento.lugarId }
                     EventoItemCard(
                         evento = evento,
-                        nombreLugar = lugar?.lugar?.nombre ?: "Lugar desconocido",
+                        nombreLugar = lugar?.lugar?.nombre ?: stringResource(R.string.lugar_desconocido),
                         ubicacionLugar = lugar?.lugar?.ubicacionTexto ?: "",
                         onClick = { onEventoClick(evento) }
                     )

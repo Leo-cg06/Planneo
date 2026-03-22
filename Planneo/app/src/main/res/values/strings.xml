@@ -59,4 +59,11 @@
 
     <string name="url_base_imagen">https://drive.google.com/uc? export=view&amp;id=</string>
     <string name="distancia_icon_desc">icono distancia</string>
+    <string name="proximo_eventos">Próximos eventos</string>
+    <string name="todos_eventos">Todos los eventos</string>
+    <string name="proximo">Próximos</string>
+    <string name="todos">Todos</string>
+    <string name="eventos_no_disponibles">No hay eventos disponibles</string>
+    <string name="lugar_desconocido">Lugar desconocido</string>
+
 </resources>
