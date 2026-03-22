@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.maestre.planneo.activitiess.DetalleLugarActivity
+import com.maestre.planneo.activities.DetalleLugarActivity
 import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.components.Buscador
 import com.maestre.planneo.components.IndicadorCargando

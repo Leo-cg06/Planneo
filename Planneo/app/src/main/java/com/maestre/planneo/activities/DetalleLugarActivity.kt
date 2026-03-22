@@ -1,4 +1,4 @@
-package com.maestre.planneo.activitiess
+package com.maestre.planneo.activities
 
 import com.maestre.planneo.R
 import android.content.Intent

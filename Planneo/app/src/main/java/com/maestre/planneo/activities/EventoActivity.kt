@@ -38,9 +38,6 @@ class EventoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-
-
-
         setContent {
             PlanneoTheme {
                 val mainViewModel: MainViewModel = viewModel()
