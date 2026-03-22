@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import com.maestre.planneo.activities.EventoActivity
 import com.maestre.planneo.activities.FavoritosActivity
 import com.maestre.planneo.activities.LugaresActivity
+import com.maestre.planneo.activities.MapaActivity
 import com.maestre.planneo.activities.PerfilActivity
 
 @Composable
@@ -63,7 +64,7 @@ fun BottomNavBar(
             selected = currentScreen == "Mapa",
             onClick = {
                 if (currentScreen != "Mapa") {
-                    val intent = Intent(context, PerfilActivity::class.java)
+                    val intent = Intent(context, MapaActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
                 }
