@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.maestre.planneo.activities.DetalleLugarActivity
 import com.maestre.planneo.components.IndicadorCargando
 import com.maestre.planneo.components.LocationOnIcon
 import com.maestre.planneo.ui.theme.PlanneoTheme
@@ -59,7 +58,6 @@ class DetalleEventoActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleEventoContent(
@@ -70,284 +68,104 @@ fun DetalleEventoContent(
 ) {
     val eventos by viewModel.eventos.collectAsState()
     val lugares by viewModel.lugares.collectAsState()
-    val evento = eventos.find { it.id == eventoId }
     val context = LocalContext.current
+    
+    val evento = eventos.find { it.id == eventoId }
+    val lugar = lugares.find { it.lugar.id == evento?.lugarId }
 
-    LaunchedEffect(eventoId) {
-        if (eventos.isEmpty()) {
-            viewModel.cargarEventos()
-        }
-        if (lugares.isEmpty()) {
-            viewModel.cargarLugares()
-        }
+    LaunchedEffect(Unit) {
+        if (eventos.isEmpty()) viewModel.cargarEventos()
+        if (lugares.isEmpty()) viewModel.cargarLugares()
     }
-
     if (evento == null) {
         IndicadorCargando()
         return
     }
 
-    val lugar = lugares.find { it.lugar.id == evento.lugarId }
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle del Evento", maxLines = 1) },
+                title = { Text(stringResource(R.string.detalle_evento)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = stringResource(R.string.volver))
-                    }
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
                 },
                 actions = {
-                    // Botón para compartir
+                    val shareMsg = stringResource(R.string.mirar_evento, evento.nombre)
                     IconButton(onClick = {
-                        val shareIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
+                        val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, "¡Mira este evento! ${evento.nombre}")
+                            putExtra(Intent.EXTRA_TEXT, shareMsg)
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "Compartir evento"))
-                    }) {
-                        Icon(Icons.Filled.Share, contentDescription = "Compartir")
-                    }
+                        context.startActivity(Intent.createChooser(intent, null))
+                    }) { Icon(Icons.Default.Share, null) }
                 }
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Imagen del evento
-            if (!evento.fotoUrl.isNullOrEmpty()) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(buildImageUrl(evento.fotoUrl, context))
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = evento.nombre,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Filled.Event,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState())) {
+
+
+            Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+                if (!evento.fotoUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = buildImageUrl(evento.fotoUrl, context),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primaryContainer) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Event, null, Modifier.size(100.dp))
+                        }
                     }
                 }
             }
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                // Título del evento
-                Text(
-                    text = evento.nombre,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(evento.nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tipo de evento (si existe)
                 if (!evento.tipoEvento.isNullOrEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Filled.Category,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = evento.tipoEvento,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    SuggestionChip(onClick = {}, label = { Text(evento.tipoEvento) },
+                        icon = { Icon(Icons.Default.Category, null, Modifier.size(16.dp)) })
                 }
 
-                // Información del evento en cards
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Fecha de inicio
-                        InfoRow(
-                            icon = Icons.Filled.CalendarToday,
-                            label = "Inicio",
-                            value = formatFechaCompleta(evento.fechaInicio)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Fecha de fin (si existe)
-                        if (!evento.fechaFin.isNullOrEmpty()) {
-                            InfoRow(
-                                icon = Icons.Filled.EventAvailable,
-                                label = "Fin",
-                                value = formatFechaCompleta(evento.fechaFin)
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-
-                        // Duración calculada
-                        val duracion = calcularDuracion(evento.fechaInicio, evento.fechaFin)
-                        if (duracion.isNotEmpty()) {
-                            InfoRow(
-                                icon = Icons.Filled.Schedule,
-                                label = "Duración",
-                                value = duracion
-                            )
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        InfoRow(Icons.Default.CalendarToday, "Inicio", formatFechaCompleta(evento.fechaInicio))
+                        evento.fechaFin?.let { InfoRow(Icons.Default.EventAvailable, "Fin", formatFechaCompleta(it)) }
+                        calcularDuracion(evento.fechaInicio, evento.fechaFin).takeIf { it.isNotEmpty() }?.let {
+                            InfoRow(Icons.Default.Schedule, "Duración", it)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Descripción
-                if (!evento.descripcion.isNullOrEmpty()) {
-                    Text(
-                        text = "Descripción",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = evento.descripcion,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
+                evento.descripcion.let {
+                    Text(stringResource(R.string.descripcion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
 
-                // Información del lugar
-                if (lugar != null) {
-                    Text(
-                        text = "Ubicación",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = lugar.lugar.nombre,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                LocationOnIcon()
-                                //Lo dejo comentado porque el color varía un poco y quiero ver si se nota
-//                                Icon(
-//                                    Icons.Filled.LocationOn,
-//                                    contentDescription = null,
-//                                    modifier = Modifier.size(16.dp),
-//                                    tint = MaterialTheme.colorScheme.primary
-//                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = lugar.lugar.ubicacionTexto,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                lugar?.let { item ->
+                    Text(stringResource(R.string.ubicacion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            LocationOnIcon()
+                            Column(Modifier.padding(start = 8.dp)) {
+                                Text(item.lugar.nombre, fontWeight = FontWeight.Bold)
+                                Text(item.lugar.ubicacionTexto, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Botón para ver el lugar
-                    Button(
-                        onClick = { onVerLugar(lugar.lugar.id) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Filled.Place, null, Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Ver detalles del lugar")
+                    Button(onClick = { onVerLugar(item.lugar.id) }, Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Place, null); Text(" Ver detalles", Modifier.padding(start = 8.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Botón para abrir en mapa
-                    OutlinedButton(
-                        onClick = {
-                            val uri = Uri.parse("geo:${lugar.lugar.latitud},${lugar.lugar.longitud}?q=${lugar.lugar.latitud},${lugar.lugar.longitud}(${evento.nombre})")
-                            val mapIntent = Intent(Intent.ACTION_VIEW, uri)
-                            mapIntent.setPackage("com.google.android.apps.maps")
-                            if (mapIntent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(mapIntent)
-                            } else {
-                                val browserIntent = Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("https://www.google.com/maps/search/?api=1&query=${lugar.lugar.latitud},${lugar.lugar.longitud}")
-                                )
-                                context.startActivity(browserIntent)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Filled.Map, null, Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cómo llegar")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Información adicional
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Filled.Info,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Recuerda consultar con el organizador para confirmar detalles y disponibilidad.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    OutlinedButton(onClick = {
+                        val uri = Uri.parse("geo:${item.lugar.latitud},${item.lugar.longitud}?q=${item.lugar.latitud},${item.lugar.longitud}")
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage("com.google.android.apps.maps"))
+                    }, Modifier.fillMaxWidth()) {
+                        Icon(Icons.Default.Map, null); Text(" Cómo llegar", Modifier.padding(start = 8.dp))
                     }
                 }
             }
@@ -400,18 +218,18 @@ private fun formatFechaCompleta(fecha: String): String {
 
 private fun calcularDuracion(fechaInicio: String, fechaFin: String?): String {
     if (fechaFin.isNullOrEmpty()) return ""
-    
+
     return try {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val inicio = format.parse(fechaInicio)
         val fin = format.parse(fechaFin)
-        
+
         if (inicio != null && fin != null) {
             val diffMillis = fin.time - inicio.time
             val horas = diffMillis / (1000 * 60 * 60)
             val minutos = (diffMillis / (1000 * 60)) % 60
             val dias = horas / 24
-            
+
             when {
                 dias > 0 -> "${dias} día${if (dias > 1) "s" else ""}"
                 horas > 0 -> "${horas}h ${if (minutos > 0) "${minutos}min" else ""}"

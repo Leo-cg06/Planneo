@@ -65,5 +65,9 @@
     <string name="todos">Todos</string>
     <string name="eventos_no_disponibles">No hay eventos disponibles</string>
     <string name="lugar_desconocido">Lugar desconocido</string>
+    <string name="detalle_evento">Detalle del Evento</string>
+    <string name="mirar_evento">¡Mira este evento! %1$s</string>
+    <string name="compartir_evento">Compartir evento</string>
+    <string name="descripcion">Descripción</string>
 
 </resources>
