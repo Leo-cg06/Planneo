@@ -69,5 +69,7 @@
     <string name="mirar_evento">¡Mira este evento! %1$s</string>
     <string name="compartir_evento">Compartir evento</string>
     <string name="descripcion">Descripción</string>
+    <string name="informacion_cuenta">Información de la cuenta</string>
+
 
 </resources>

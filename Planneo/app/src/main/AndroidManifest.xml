@@ -33,6 +33,8 @@
         <activity android:name=".activities.DetalleEventoActivity" android:exported="false" />
         <activity android:name=".activities.ValorarActivity" android:exported="false" />
         <activity android:name=".activities.VerResenasActivity" android:exported="false" />
+        <activity android:name=".activities.FavoritosActivity" android:exported="false" />
+
 
     </application>
 </manifest>

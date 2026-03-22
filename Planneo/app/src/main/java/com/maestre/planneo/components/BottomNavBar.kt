@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import com.maestre.planneo.activities.EventoActivity
+import com.maestre.planneo.activities.FavoritosActivity
 import com.maestre.planneo.activities.LugaresActivity
 import com.maestre.planneo.activities.PerfilActivity
 
@@ -49,6 +50,31 @@ fun BottomNavBar(
             selected = currentScreen == "Favoritos",
             onClick = {
                 if (currentScreen != "Favoritos") {
+                    val intent = Intent(context, FavoritosActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
+            }
+        )
+
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Map, contentDescription = null) },
+            label = { Text("Mapa") },
+            selected = currentScreen == "Mapa",
+            onClick = {
+                if (currentScreen != "Mapa") {
+                    val intent = Intent(context, PerfilActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
+            }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Star, contentDescription = null) },
+            label = { Text("Perfil") },
+            selected = currentScreen == "Perfil",
+            onClick = {
+                if (currentScreen != "Perfil") {
                     val intent = Intent(context, PerfilActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
