@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -17,16 +16,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
+import com.maestre.planneo.components.CategoryIcon
+import com.maestre.planneo.components.EventIcon
+import com.maestre.planneo.components.EventoAsyncImage
+import com.maestre.planneo.components.EventoFechasCard
+import com.maestre.planneo.components.EventoNombre
+import com.maestre.planneo.components.EventoTipo
 import com.maestre.planneo.components.IndicadorCargando
 import com.maestre.planneo.components.LocationOnIcon
+import com.maestre.planneo.components.ShareEventoButton
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
@@ -91,13 +94,7 @@ fun DetalleEventoContent(
                 },
                 actions = {
                     val shareMsg = stringResource(R.string.mirar_evento, evento.nombre)
-                    IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, shareMsg)
-                        }
-                        context.startActivity(Intent.createChooser(intent, null))
-                    }) { Icon(Icons.Default.Share, null) }
+                    ShareEventoButton(shareMsg)
                 }
             )
         }
@@ -107,38 +104,25 @@ fun DetalleEventoContent(
 
             Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
                 if (!evento.fotoUrl.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = buildImageUrl(evento.fotoUrl, context),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                    EventoAsyncImage(evento)
                 } else {
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primaryContainer) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Event, null, Modifier.size(100.dp))
+                            EventIcon()
                         }
                     }
                 }
             }
 
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text(evento.nombre, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                EventoNombre(evento)
 
                 if (!evento.tipoEvento.isNullOrEmpty()) {
-                    SuggestionChip(onClick = {}, label = { Text(evento.tipoEvento) },
-                        icon = { Icon(Icons.Default.Category, null, Modifier.size(16.dp)) })
+                    SuggestionChip(onClick = {}, label = { EventoTipo(evento) },
+                        icon = { CategoryIcon() })
                 }
 
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        InfoRow(Icons.Default.CalendarToday, "Inicio", formatFechaCompleta(evento.fechaInicio))
-                        evento.fechaFin?.let { InfoRow(Icons.Default.EventAvailable, "Fin", formatFechaCompleta(it)) }
-                        calcularDuracion(evento.fechaInicio, evento.fechaFin).takeIf { it.isNotEmpty() }?.let {
-                            InfoRow(Icons.Default.Schedule, "Duración", it)
-                        }
-                    }
-                }
+                EventoFechasCard(evento)
 
                 evento.descripcion.let {
                     Text(stringResource(R.string.descripcion), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -174,7 +158,7 @@ fun DetalleEventoContent(
 }
 
 @Composable
-private fun InfoRow(
+fun InfoRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     value: String
@@ -202,41 +186,5 @@ private fun InfoRow(
                 fontWeight = FontWeight.Medium
             )
         }
-    }
-}
-
-private fun formatFechaCompleta(fecha: String): String {
-    return try {
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val date = inputFormat.parse(fecha)
-        val outputFormat = SimpleDateFormat("EEEE, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", Locale("es", "ES"))
-        outputFormat.format(date ?: Date())
-    } catch (e: Exception) {
-        fecha
-    }
-}
-
-private fun calcularDuracion(fechaInicio: String, fechaFin: String?): String {
-    if (fechaFin.isNullOrEmpty()) return ""
-
-    return try {
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val inicio = format.parse(fechaInicio)
-        val fin = format.parse(fechaFin)
-
-        if (inicio != null && fin != null) {
-            val diffMillis = fin.time - inicio.time
-            val horas = diffMillis / (1000 * 60 * 60)
-            val minutos = (diffMillis / (1000 * 60)) % 60
-            val dias = horas / 24
-
-            when {
-                dias > 0 -> "${dias} día${if (dias > 1) "s" else ""}"
-                horas > 0 -> "${horas}h ${if (minutos > 0) "${minutos}min" else ""}"
-                else -> "${minutos} minutos"
-            }
-        } else ""
-    } catch (e: Exception) {
-        ""
     }
 }

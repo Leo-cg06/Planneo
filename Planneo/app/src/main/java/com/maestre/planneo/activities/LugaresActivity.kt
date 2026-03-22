@@ -98,8 +98,3 @@ fun LugaresContent(
     }
 }
 
-fun buildImageUrl(fotoUrl: String, context: android.content.Context): String {
-    val baseUrl = context.getString(R.string.url_base_imagen)
-    return if (fotoUrl.startsWith("http", ignoreCase = true)) fotoUrl
-    else "$baseUrl$fotoUrl"
-}

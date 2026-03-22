@@ -3,6 +3,7 @@ package com.maestre.planneo.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.maestre.planneo.R
 import com.maestre.planneo.db.EventoRepository
 import com.maestre.planneo.db.FavoritoRepository
 import com.maestre.planneo.db.LugarRepository
@@ -14,6 +15,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.maestre.planneo.db.AuthenticationRepositoryImpl
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -160,6 +164,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun formatFechaCompleta(fecha: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val date = inputFormat.parse(fecha)
+            val outputFormat = SimpleDateFormat("EEEE, dd 'de' MMMM 'de' yyyy 'a las' HH:mm", Locale("es", "ES"))
+            outputFormat.format(date ?: Date())
+        } catch (e: Exception) {
+            fecha
+        }
+    }
+
+    fun calcularDuracion(fechaInicio: String, fechaFin: String?): String {
+        if (fechaFin.isNullOrEmpty()) return ""
+
+        return try {
+            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val inicio = format.parse(fechaInicio)
+            val fin = format.parse(fechaFin)
+
+            if (inicio != null && fin != null) {
+                val diffMillis = fin.time - inicio.time
+                val horas = diffMillis / (1000 * 60 * 60)
+                val minutos = (diffMillis / (1000 * 60)) % 60
+                val dias = horas / 24
+
+                when {
+                    dias > 0 -> "${dias} día${if (dias > 1) "s" else ""}"
+                    horas > 0 -> "${horas}h ${if (minutos > 0) "${minutos}min" else ""}"
+                    else -> "${minutos} minutos"
+                }
+            } else ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     // VALORACIONES
 
     fun cargarValoraciones(lugarId: Int) {
@@ -173,5 +213,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val resultado = ValoracionRepository.insertarValoracion(valoracion)
             if (resultado) onSuccess() else onError()
         }
+    }
+
+    // IMAGENES
+
+    fun buildImageUrl(fotoUrl: String, context: android.content.Context): String {
+        val baseUrl = context.getString(R.string.url_base_imagen)
+        return if (fotoUrl.startsWith("http", ignoreCase = true)) fotoUrl
+        else "$baseUrl$fotoUrl"
     }
 }
