@@ -183,9 +183,10 @@ fun EventoItemCard(
     evento: Evento,
     nombreLugar: String,
     ubicacionLugar: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val context = LocalContext.current
+    val mVM = viewModel<MainViewModel>()
 
     Card(
         modifier = Modifier
@@ -203,7 +204,7 @@ fun EventoItemCard(
             if (!evento.fotoUrl.isNullOrEmpty()) {
                 AsyncImage(
                     model = ImageRequest.Builder(context)
-                        .data(buildImageUrl(evento.fotoUrl, context))
+                        .data(mVM.buildImageUrl(evento.fotoUrl, context))
                         .crossfade(true)
                         .build(),
                     contentDescription = evento.nombre,

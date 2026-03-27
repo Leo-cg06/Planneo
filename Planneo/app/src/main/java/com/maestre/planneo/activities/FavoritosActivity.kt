@@ -113,7 +113,7 @@ fun FavoritosContent(
                     FavoritoLugarItem(
                         lugarConFavorito = lugarConFavorito,
                         onClick = { onLugarClick(lugarConFavorito) },
-                        onDeleteClick = { mainViewModel.alternarLugarFavorito(lugarConFavorito) }
+                        onDeleteClick = { mainViewModel.alternarLugarFavorito(lugarConFavorito) },
                     )
                 }
             }
@@ -125,10 +125,11 @@ fun FavoritosContent(
 private fun FavoritoLugarItem(
     lugarConFavorito: LugarConFavorito,
     onClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onDeleteClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val lugar = lugarConFavorito.lugar
+    val mVM = viewModel<MainViewModel>()
 
     Card(
         modifier = Modifier
@@ -145,7 +146,7 @@ private fun FavoritoLugarItem(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(buildImageUrl(lugar.fotoUrl, context))
+                    .data(mVM.buildImageUrl(lugar.fotoUrl, context))
                     .crossfade(true)
                     .build(),
                 contentDescription = lugar.nombre,

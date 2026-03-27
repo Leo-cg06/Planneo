@@ -39,8 +39,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maestre.planneo.R
-import com.maestre.planneo.activities.buildImageUrl
 import com.maestre.planneo.model.Evento
 import com.maestre.planneo.model.Lugar
 import com.maestre.planneo.model.LugarConFavorito
@@ -55,7 +55,8 @@ fun LugarCard(
 ) {
     val context = LocalContext.current
     val lugar = lugarConFavorito.lugar
-    val urlImagen = buildImageUrl(lugar.fotoUrl, context)
+    val mVM = viewModel<MainViewModel>()
+    val urlImagen = mVM.buildImageUrl(lugar.fotoUrl, context)
 
     Card(
         modifier = Modifier
