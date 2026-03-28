@@ -56,7 +56,6 @@ class PerfilActivity : ComponentActivity() {
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilContent(
@@ -65,6 +64,7 @@ fun PerfilContent(
     onLogout: () -> Unit
 ) {
     val authState by authViewModel.state.collectAsState()
+    val perfil = authState.perfil
 
     Column(
         modifier = modifier
@@ -83,7 +83,6 @@ fun PerfilContent(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Avatar del usuario
             Surface(
                 modifier = Modifier.size(120.dp),
                 shape = CircleShape,
@@ -120,6 +119,32 @@ fun PerfilContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+
+                    if (!perfil?.nombre.isNullOrEmpty() || !perfil?.apellido.isNullOrEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = ("Nombre completo"),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "${perfil?.nombre ?: ""} ${perfil?.apellido ?: ""}".trim(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -145,6 +170,12 @@ fun PerfilContent(
                 }
             }
 
+            PreferenciasSection(
+                preferenciasActuales = perfil?.preferencias ?: emptyList(),
+                onGuardar = { nuevasPreferencias ->
+                    authViewModel.actualizarPreferencias(nuevasPreferencias)
+                }
+            )
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
@@ -168,6 +199,124 @@ fun PerfilContent(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun PreferenciasSection(
+    preferenciasActuales: List<String>,
+    onGuardar: (List<String>) -> Unit
+) {
+    // La lista de las preferencias disponibles
+    val opciones = listOf("Restaurantes", "Parques", "Museos", "Ocio", "Naturaleza", "Deporte", "Fiesta", "Familia")
+
+    var editando by remember { mutableStateOf(false) }
+
+
+    var seleccionadasTemporalmente by remember(editando, preferenciasActuales) {
+        mutableStateOf(preferenciasActuales.toSet())
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Mis Preferencias",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                IconButton(onClick = {
+                    if (editando) {
+                        onGuardar(seleccionadasTemporalmente.toList())
+                    }
+                    editando = !editando
+                }) {
+                    Icon(
+                        imageVector = if (editando) Icons.Filled.Check else Icons.Filled.Edit,
+                        contentDescription = if (editando) "Guardar" else "Editar",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                opciones.forEach { opcion ->
+
+                    val estaSeleccionada = if (editando) {
+                        seleccionadasTemporalmente.contains(opcion)
+                    } else {
+                        preferenciasActuales.contains(opcion)
+                    }
+
+
+                    val chipColors = if (editando) {
+                        FilterChipDefaults.filterChipColors()
+                    } else {
+                        FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                    }
+
+                    FilterChip(
+                        selected = estaSeleccionada,
+                        onClick = {
+                            if (editando) {
+                                if (seleccionadasTemporalmente.contains(opcion)) {
+                                    seleccionadasTemporalmente = seleccionadasTemporalmente - opcion
+                                } else {
+                                    seleccionadasTemporalmente = seleccionadasTemporalmente + opcion
+                                }
+                            }
+                        },
+                        label = { Text(opcion) },
+                        leadingIcon = if (estaSeleccionada) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        } else null,
+                        colors = chipColors,
+                        enabled = true
+                    )
+                }
+            }
+
+            if (editando) {
+                Text(
+                    text = "Toca las opciones para añadirlas o quitarlas.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+            }
         }
     }
 }

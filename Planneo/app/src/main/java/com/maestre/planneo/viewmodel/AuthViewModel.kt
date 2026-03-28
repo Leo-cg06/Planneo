@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.maestre.planneo.db.AuthenticationRepository
 import com.maestre.planneo.db.AuthenticationRepositoryImpl
+import com.maestre.planneo.db.PerfilRepository
+import com.maestre.planneo.model.Perfil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,7 +24,8 @@ data class AuthState(
     val estaLogueado: Boolean = false,
     val userEmail: String = "",
     val error: String? = null,
-    val mesnajeExito: String? = null
+    val mesnajeExito: String? = null,
+    val perfil: Perfil? = null
 )
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
@@ -44,11 +47,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val estaLogueado = repository.isUserLoggedIn()
                 val correo = repository.getCurrentUserEmail() ?: ""
+                val userId = repository.getCurrentUserId()
+
+                val perfilDescargado = if (userId != null) {
+                    PerfilRepository.getPerfil(userId)
+                } else {
+                    null
+                }
 
                 _state.value = AuthState(
                     cargando = false,
                     estaLogueado = estaLogueado,
-                    userEmail = correo
+                    userEmail = correo,
+                    perfil = perfilDescargado
                 )
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error al comprobar sesión: ${e.message}")
@@ -138,4 +149,35 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun clearSuccessMessage() {
         _state.value = _state.value.copy(mesnajeExito = null)
     }
+
+    fun actualizarPreferencias(nuevasPreferencias: List<String>) {
+        val perfilActual = _state.value.perfil ?: return
+
+        val perfilActualizado = perfilActual.copy(preferencias = nuevasPreferencias)
+
+        viewModelScope.launch {
+            try {
+                _state.value = _state.value.copy(cargando = true)
+
+                val exito = PerfilRepository.updatePerfil(perfilActualizado)
+
+                if (exito) {
+                    _state.value = _state.value.copy(
+                        cargando = false,
+                        perfil = perfilActualizado,
+                        mesnajeExito = "Preferencias guardadas con éxito"
+                    )
+                } else {
+                    _state.value = _state.value.copy(
+                        cargando = false,
+                        error = "Error al guardar las preferencias"
+                    )
+                }
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(cargando = false, error = e.message)
+            }
+        }
+    }
+
+
 }

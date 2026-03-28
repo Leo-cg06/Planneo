@@ -71,7 +71,7 @@ fun BottomNavBar(
             }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.Star, contentDescription = null) },
+            icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
             label = { Text("Perfil") },
             selected = currentScreen == "Perfil",
             onClick = {

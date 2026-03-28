@@ -70,6 +70,8 @@
     <string name="compartir_evento">Compartir evento</string>
     <string name="descripcion">Descripción</string>
     <string name="informacion_cuenta">Información de la cuenta</string>
+    <string name="preferencias">Preferencias</string>
+    <string name="nombre_completo">Nombre Completo</string>
 
 
 </resources>
