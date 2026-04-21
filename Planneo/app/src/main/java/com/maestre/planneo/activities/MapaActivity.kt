@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -37,11 +38,15 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.MinimapOverlay
 import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.ScaleBarOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 
 class MapaActivity : ComponentActivity(), MapEventsReceiver {
     private val MULTIPLE_PERMISSIONS_REQUEST_CODE: Int = 4
@@ -111,14 +116,14 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
                     if (somePermissionWasDenied) {
                         Toast.makeText(
                             this,
-                            "Can´t load maps without al the permissions granted",
+                            "Can´t load maps without all permissions granted",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
                 } else {
                     Toast.makeText(
                         this,
-                        "Can´t load maps without al the permissions granted",
+                        "Can´t load maps without all permissions granted",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -134,34 +139,40 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
     ) {
         var searchQuery by remember { mutableStateOf("") }
 
-        Column(modifier = modifier.fillMaxSize()) {
-            Surface(
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Barra de búsqueda
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                tonalElevation = 3.dp
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Buscar lugares por nombre o tipo") },
-                        leadingIcon = {
-                            Icon(Icons.Filled.Search, contentDescription = null)
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = null)
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp)
-                    )
-                }
-            }
+                placeholder = { Text("Buscar lugares por nombre o tipo") },
+                leadingIcon = {
+                    Icon(Icons.Filled.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Filled.Clear, contentDescription = null)
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(24.dp)
+            )
 
-            Box(modifier = Modifier.weight(1f)) {
+            // Mapa dentro de una Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(700.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
                 OsmMap()
             }
         }
@@ -177,11 +188,12 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
 
         AndroidView(
             factory = { mapView },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(16.dp))
         )
 
         setupMap()
-        createMarkers()
         myLocation()
         mapView.invalidate()
     }
@@ -198,26 +210,14 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
         val dm: DisplayMetrics = this.resources.displayMetrics
         val scaleBarOverlay = ScaleBarOverlay(mapView)
         scaleBarOverlay.setCentred(true)
-
         scaleBarOverlay.setScaleBarOffset(dm.widthPixels / 2, 40)
         mapView.overlays.add(scaleBarOverlay)
-
-        val minimapOverlay = MinimapOverlay(this, mapView.tileRequestCompleteHandler)
-        minimapOverlay.setWidth(dm.widthPixels / 5)
-        minimapOverlay.setHeight(dm.heightPixels / 5)
-
-        minimapOverlay.setTileSource(TileSourceFactory.OpenTopo)
-        mapView.overlays.add(minimapOverlay)
     }
 
     private fun myLocation() {
-        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView)
+        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView)
         mLocationOverlay.enableMyLocation()
-
         mLocationOverlay.enableFollowLocation()
-
-        //val icon: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.ic_location)
-        //mLocationOverlay.setDirectionIcon(icon)
 
         mLocationOverlay.runOnFirstFix {
             runOnUiThread {
@@ -231,30 +231,9 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
         mapView.overlays.add(mLocationOverlay)
     }
 
-    private fun createMarkers() {
-        val latidudIesMaestre = 38.9908
-        var longitudIesMaestre = -3.9206
-        val marker = Marker(mapView)
-        marker.position = GeoPoint(latidudIesMaestre, longitudIesMaestre)
-        marker.title = "IES Maestre de Calatrava"
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-        mapView.overlays.add(marker)
-    }
 
     override fun singleTapConfirmedHelper(point: GeoPoint?): Boolean {
-        val marker = Marker(mapView)
-        marker.position = point;
-        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-        mapView.overlays.add(marker)
-
-        val circle = Polygon(mapView)
-        circle.points = Polygon.pointsAsCircle(point, 75.0)
-        circle.fillPaint.color = Color.argb(50, 0, 0, 255)
-        circle.fillPaint.strokeWidth = 2.0f
-        mapView.overlays.add(circle)
-
-        mapView.invalidate()
-        return true
+        return false
     }
 
     override fun longPressHelper(p: GeoPoint?): Boolean {

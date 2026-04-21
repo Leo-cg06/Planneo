@@ -44,20 +44,6 @@ fun BottomNavBar(
                 }
             }
         )
-
-        NavigationBarItem(
-            icon = { Icon(Icons.Filled.Star, contentDescription = null) },
-            label = { Text("Favoritos") },
-            selected = currentScreen == "Favoritos",
-            onClick = {
-                if (currentScreen != "Favoritos") {
-                    val intent = Intent(context, FavoritosActivity::class.java)
-                    context.startActivity(intent)
-                    (context as? Activity)?.finish()
-                }
-            }
-        )
-
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Map, contentDescription = null) },
             label = { Text("Mapa") },
@@ -65,6 +51,18 @@ fun BottomNavBar(
             onClick = {
                 if (currentScreen != "Mapa") {
                     val intent = Intent(context, MapaActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
+            }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Star, contentDescription = null) },
+            label = { Text("Favoritos") },
+            selected = currentScreen == "Favoritos",
+            onClick = {
+                if (currentScreen != "Favoritos") {
+                    val intent = Intent(context, FavoritosActivity::class.java)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
                 }
