@@ -68,6 +68,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
+    implementation(libs.androidx.compose.animation)
 
     val ktor_version = "3.4.1"
     implementation("io.ktor:ktor-client-android:$ktor_version")
@@ -83,5 +84,4 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("org.osmdroid:osmdroid-android:6.1.20")
-
 }

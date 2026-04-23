@@ -2,9 +2,6 @@ package com.maestre.planneo.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.DisplayMetrics
@@ -12,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,17 +18,14 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.maestre.planneo.R
 import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.ui.theme.PlanneoTheme
-import com.maestre.planneo.viewmodel.MainViewModel
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -38,20 +33,20 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.ScaleBarOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import com.maestre.planneo.model.LugarMapa
+import com.maestre.planneo.viewmodel.OverpassViewModel
 
 class MapaActivity : ComponentActivity(), MapEventsReceiver {
     private val MULTIPLE_PERMISSIONS_REQUEST_CODE: Int = 4
-
-    private lateinit var mapView: MapView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,8 +58,11 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
         enableEdgeToEdge()
         setContent {
             PlanneoTheme {
-                val mainViewModel: MainViewModel = viewModel()
                 val context = LocalContext.current
+
+                val overpassViewModel: OverpassViewModel = viewModel()
+
+                val myMapView = remember { MapView(context) }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -73,7 +71,8 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
                     }
                 ) { innerPadding ->
                     MapaContent(
-                        viewModel = mainViewModel,
+                        overpassViewModel = overpassViewModel,
+                        mapView = myMapView,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -90,7 +89,7 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
         if (fineLocationPermissionCheck != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 MULTIPLE_PERMISSIONS_REQUEST_CODE
             )
         }
@@ -104,133 +103,199 @@ class MapaActivity : ComponentActivity(), MapEventsReceiver {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
 
-        when (requestCode) {
-            MULTIPLE_PERMISSIONS_REQUEST_CODE -> {
-                if (grantResults.size > 0) {
-                    var somePermissionWasDenied = false
-                    for (result in grantResults) {
-                        if (result == PackageManager.PERMISSION_DENIED) {
-                            somePermissionWasDenied = true
-                        }
-                    }
-                    if (somePermissionWasDenied) {
-                        Toast.makeText(
-                            this,
-                            "Can´t load maps without all permissions granted",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else {
+        if (requestCode == MULTIPLE_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.isNotEmpty()) {
+                val somePermissionWasDenied = grantResults.any { it == PackageManager.PERMISSION_DENIED }
+                if (somePermissionWasDenied) {
                     Toast.makeText(
                         this,
                         "Can´t load maps without all permissions granted",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-                return
+            } else {
+                Toast.makeText(
+                    this,
+                    "Can´t load maps without all permissions granted",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
+    @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun MapaContent(
-        viewModel: MainViewModel,
+        overpassViewModel: OverpassViewModel,
+        mapView: MapView,
         modifier: Modifier = Modifier
     ) {
         var searchQuery by remember { mutableStateOf("") }
+        var categoriasSeleccionadas by remember { mutableStateOf(setOf<String>()) }
+        var isSearchFocused by remember { mutableStateOf(false) }
+
+        val opciones = listOf("Restaurantes", "Parques", "Museos", "Ocio", "Naturaleza", "Deporte", "Fiesta", "Familia")
+        val keyboardController = LocalSoftwareKeyboardController.current
+
+        val lugaresEncontrados by overpassViewModel.lugaresMapa.collectAsState()
+        val estaCargando by overpassViewModel.cargandoMapa.collectAsState()
+
+        val ejecutarBusqueda = {
+            val boundingBox = mapView.boundingBox
+            overpassViewModel.buscarEnOverpass(
+                textoBuscado = searchQuery,
+                categoriasSeleccionadas = categoriasSeleccionadas,
+                sur = boundingBox.latSouth,
+                oeste = boundingBox.lonWest,
+                norte = boundingBox.latNorth,
+                este = boundingBox.lonEast
+            )
+        }
 
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Barra de búsqueda
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Buscar lugares por nombre o tipo") },
-                leadingIcon = {
-                    Icon(Icons.Filled.Search, contentDescription = null)
-                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState -> isSearchFocused = focusState.isFocused },
+                placeholder = { Text("Buscar lugares...") },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Buscar") },
                 trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Filled.Clear, contentDescription = null)
+                    if (searchQuery.isNotEmpty() || categoriasSeleccionadas.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchQuery = ""
+                            categoriasSeleccionadas = emptySet()
+                            // Al limpiar también borramos los resultados actuales
+                            overpassViewModel.buscarEnOverpass("", emptySet(), 0.0, 0.0, 0.0, 0.0)
+                        }) {
+                            Icon(Icons.Filled.Clear, contentDescription = "Limpiar")
                         }
                     }
                 },
                 singleLine = true,
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    keyboardController?.hide()
+                    ejecutarBusqueda()
+                })
             )
 
-            // Mapa dentro de una Card
+            AnimatedVisibility(visible = isSearchFocused || categoriasSeleccionadas.isNotEmpty() || searchQuery.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    opciones.forEach { opcion ->
+                        val isSelected = categoriasSeleccionadas.contains(opcion)
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = {
+                                categoriasSeleccionadas = if (isSelected) {
+                                    categoriasSeleccionadas - opcion
+                                } else {
+                                    categoriasSeleccionadas + opcion
+                                }
+                            },
+                            label = { Text(opcion) },
+                            leadingIcon = if (isSelected) {
+                                { Icon(Icons.Default.Check, contentDescription = "Seleccionado") }
+                            } else null,
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                }
+            }
+
+            if (estaCargando) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(700.dp),
+                    .weight(1f),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                OsmMap()
+                OsmMap(lugares = lugaresEncontrados, mapView = mapView)
             }
         }
     }
 
     @Composable
-    fun OsmMap() {
-        val context = LocalContext.current
-
-        mapView = remember {
-            MapView(this)
-        }
-
+    fun OsmMap(
+        lugares: List<LugarMapa>,
+        mapView: MapView
+    ) {
         AndroidView(
-            factory = { mapView },
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
-        )
+            factory = {
+                mapView.apply {
+                    setupMap(this)
+                    myLocation(this)
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { map ->
+            map.overlays.removeAll { it is Marker }
 
-        setupMap()
-        myLocation()
-        mapView.invalidate()
+            lugares.forEach { lugar ->
+                val marker = Marker(map)
+                marker.position = GeoPoint(lugar.latitud, lugar.longitud)
+                marker.title = lugar.nombre
+                marker.subDescription = "Categoría: ${lugar.categoria}"
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+
+                map.overlays.add(marker)
+            }
+
+            map.invalidate()
+        }
     }
 
-    private fun setupMap() {
-        mapView.setClickable(true)
-        mapView.setDestroyMode(false)
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setMultiTouchControls(true)
-        mapView.getLocalVisibleRect(Rect())
+    private fun setupMap(map: MapView) {
+        map.setClickable(true)
+        map.setDestroyMode(false)
+        map.setTileSource(TileSourceFactory.MAPNIK)
+        map.setMultiTouchControls(true)
+        map.getLocalVisibleRect(Rect())
 
-        mapView.overlays.add(MapEventsOverlay(this))
+        map.overlays.add(MapEventsOverlay(this))
 
         val dm: DisplayMetrics = this.resources.displayMetrics
-        val scaleBarOverlay = ScaleBarOverlay(mapView)
+        val scaleBarOverlay = ScaleBarOverlay(map)
         scaleBarOverlay.setCentred(true)
         scaleBarOverlay.setScaleBarOffset(dm.widthPixels / 2, 40)
-        mapView.overlays.add(scaleBarOverlay)
+        map.overlays.add(scaleBarOverlay)
     }
 
-    private fun myLocation() {
-        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), mapView)
+    private fun myLocation(map: MapView) {
+        val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
         mLocationOverlay.enableMyLocation()
         mLocationOverlay.enableFollowLocation()
 
         mLocationOverlay.runOnFirstFix {
             runOnUiThread {
-                mapView.controller.setCenter(mLocationOverlay.myLocation)
-                mapView.controller.animateTo(mLocationOverlay.myLocation)
-                mapView.controller.setZoom(18.0)
-                mapView.invalidate()
+                map.controller.setCenter(mLocationOverlay.myLocation)
+                map.controller.animateTo(mLocationOverlay.myLocation)
+                map.controller.setZoom(18.0)
+                map.invalidate()
             }
         }
 
-        mapView.overlays.add(mLocationOverlay)
+        map.overlays.add(mLocationOverlay)
     }
-
 
     override fun singleTapConfirmedHelper(point: GeoPoint?): Boolean {
         return false
