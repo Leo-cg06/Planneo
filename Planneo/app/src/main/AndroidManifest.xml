@@ -46,7 +46,7 @@
         <activity android:name=".activities.VerResenasActivity" android:exported="false" />
         <activity android:name=".activities.FavoritosActivity" android:exported="false" />
         <activity android:name=".activities.MapaActivity" android:exported="false" />
-
+        <activity android:name=".activities.CalendarioActivity" android:exported="false" />
 
 
     </application>

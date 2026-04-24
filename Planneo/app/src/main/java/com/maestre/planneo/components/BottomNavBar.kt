@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import com.maestre.planneo.activities.CalendarioActivity
 import com.maestre.planneo.activities.EventoActivity
 import com.maestre.planneo.activities.FavoritosActivity
 import com.maestre.planneo.activities.LugaresActivity
@@ -31,7 +32,18 @@ fun BottomNavBar(
                 }
             }
         )
-
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
+            label = { Text("Calendario") },
+            selected = currentScreen == "calendario",
+            onClick = {
+                if (currentScreen != "calendario") {
+                    val intent = Intent(context, CalendarioActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
+                }
+            }
+        )
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Event, contentDescription = null) },
             label = { Text("Eventos") },
