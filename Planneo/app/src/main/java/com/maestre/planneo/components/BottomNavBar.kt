@@ -19,6 +19,8 @@ fun BottomNavBar(
     currentScreen: String,
     context: Context
 ) {
+    val activity = context as? Activity
+    val userEmail = activity?.intent?.getStringExtra("USER_EMAIL") ?: ""
     NavigationBar {
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Place, contentDescription = null) },
@@ -87,6 +89,7 @@ fun BottomNavBar(
             onClick = {
                 if (currentScreen != "Perfil") {
                     val intent = Intent(context, PerfilActivity::class.java)
+                    intent.putExtra("USER_EMAIL", userEmail)
                     context.startActivity(intent)
                     (context as? Activity)?.finish()
                 }

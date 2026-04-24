@@ -39,8 +39,9 @@ class LoginActivity : ComponentActivity() {
             PlanneoTheme {
 
                 LoginContent(
-                    onLoginSuccess = {
+                    onLoginSuccess = { emailUsuario ->
                         val intent = Intent(this, LugaresActivity::class.java)
+                        intent.putExtra("USER_EMAIL", emailUsuario)
                         startActivity(intent)
                         finish()
                     },
@@ -56,9 +57,10 @@ class LoginActivity : ComponentActivity() {
 
 @Composable
 fun LoginContent(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
+
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var contrasenaVisible by remember { mutableStateOf(false) }
@@ -70,7 +72,7 @@ fun LoginContent(
     LaunchedEffect(loginState) {
         when (val state = loginState) {
             is LoginState.Success -> {
-                onLoginSuccess()
+                onLoginSuccess(state.email)
                 authViewModel.resetState()
             }
             is LoginState.Error -> {

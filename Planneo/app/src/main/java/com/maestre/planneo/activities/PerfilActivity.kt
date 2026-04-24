@@ -1,6 +1,5 @@
 package com.maestre.planneo.activities
 
-import com.maestre.planneo.R
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,11 +15,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.maestre.planneo.R
 import com.maestre.planneo.components.BottomNavBar
 import com.maestre.planneo.ui.theme.PlanneoTheme
 import com.maestre.planneo.viewmodel.AuthViewModel
@@ -30,25 +31,38 @@ class PerfilActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val emailSession = intent.getStringExtra("USER_EMAIL") ?: ""
+
         setContent {
             PlanneoTheme {
                 val authViewModel: AuthViewModel = viewModel()
+                val authState by authViewModel.state.collectAsState()
                 val context = LocalContext.current
+
+                LaunchedEffect(Unit) {
+                    if (emailSession.isNotEmpty()) {
+                        authViewModel.cargarPerfil(emailSession)
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        BottomNavBar(currentScreen = "perfil", context = context)
+                        BottomNavBar(currentScreen = "Perfil", context = context)
                     }
                 ) { innerPadding ->
                     PerfilContent(
+                        authState = authState,
+                        emailSession = emailSession,
                         authViewModel = authViewModel,
                         modifier = Modifier.padding(innerPadding),
                         onLogout = {
-                            val intent = Intent(context, WelcomeActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            startActivity(intent)
-                            finish()
+                            authViewModel.logout {
+                                val intent = Intent(context, WelcomeActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                startActivity(intent)
+                                finish()
+                            }
                         }
                     )
                 }
@@ -56,14 +70,16 @@ class PerfilActivity : ComponentActivity() {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PerfilContent(
+    authState: com.maestre.planneo.viewmodel.AuthState,
+    emailSession: String,
     authViewModel: AuthViewModel,
     modifier: Modifier = Modifier,
     onLogout: () -> Unit
 ) {
-    val authState by authViewModel.state.collectAsState()
     val perfil = authState.perfil
 
     Column(
@@ -71,9 +87,7 @@ fun PerfilContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        TopAppBar(
-            title = { Text(stringResource(R.string.perfil)) }
-        )
+        TopAppBar(title = { Text(stringResource(R.string.perfil)) })
 
         Column(
             modifier = Modifier
@@ -101,16 +115,10 @@ fun PerfilContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = stringResource(R.string.informacion_cuenta),
                         style = MaterialTheme.typography.titleMedium,
@@ -119,86 +127,49 @@ fun PerfilContent(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-
-                    if (!perfil?.nombre.isNullOrEmpty() || !perfil?.apellido.isNullOrEmpty()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = ("Nombre completo"),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "${perfil?.nombre ?: ""} ${perfil?.apellido ?: ""}".trim(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Email,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = stringResource(R.string.correo_electronico),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = authState.userEmail.ifEmpty { "No disponible" },
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
+                    PerfilDetalleRow(
+                        icon = Icons.Filled.Email,
+                        label = stringResource(R.string.correo_electronico),
+                        value = perfil?.email ?: emailSession.ifEmpty { "No disponible" }
+                    )
                 }
             }
 
             PreferenciasSection(
                 preferenciasActuales = perfil?.preferencias ?: emptyList(),
-                onGuardar = { nuevasPreferencias ->
-                    authViewModel.actualizarPreferencias(nuevasPreferencias)
-                }
+                onGuardar = { nuevas -> authViewModel.actualizarPreferencias(nuevas) }
             )
-            Spacer(modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = { authViewModel.logout(onLogout) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Logout,
-                    contentDescription = null
-                )
+                Icon(Icons.Filled.Logout, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.cerrar_sesion),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(stringResource(R.string.cerrar_sesion))
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun PerfilDetalleRow(
+    icon: ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(text = label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         }
     }
 }
@@ -209,113 +180,51 @@ fun PreferenciasSection(
     preferenciasActuales: List<String>,
     onGuardar: (List<String>) -> Unit
 ) {
-    // La lista de las preferencias disponibles
     val opciones = listOf("Restaurantes", "Parques", "Museos", "Ocio", "Naturaleza", "Deporte", "Fiesta", "Familia")
-
     var editando by remember { mutableStateOf(false) }
 
-
-    var seleccionadasTemporalmente by remember(editando, preferenciasActuales) {
+    val seleccionadas = remember(preferenciasActuales) {
         mutableStateOf(preferenciasActuales.toSet())
     }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Mis Preferencias",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
+                Text("Mis Preferencias", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 IconButton(onClick = {
-                    if (editando) {
-                        onGuardar(seleccionadasTemporalmente.toList())
-                    }
+                    if (editando) onGuardar(seleccionadas.value.toList())
                     editando = !editando
                 }) {
-                    Icon(
-                        imageVector = if (editando) Icons.Filled.Check else Icons.Filled.Edit,
-                        contentDescription = if (editando) "Guardar" else "Editar",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    Icon(imageVector = if (editando) Icons.Filled.Check else Icons.Filled.Edit, contentDescription = null)
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 opciones.forEach { opcion ->
-
-                    val estaSeleccionada = if (editando) {
-                        seleccionadasTemporalmente.contains(opcion)
-                    } else {
-                        preferenciasActuales.contains(opcion)
-                    }
-
-
-                    val chipColors = if (editando) {
-                        FilterChipDefaults.filterChipColors()
-                    } else {
-                        FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                            selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                            selectedLeadingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-
+                    val isSelected = seleccionadas.value.contains(opcion)
                     FilterChip(
-                        selected = estaSeleccionada,
+                        selected = isSelected,
                         onClick = {
                             if (editando) {
-                                if (seleccionadasTemporalmente.contains(opcion)) {
-                                    seleccionadasTemporalmente = seleccionadasTemporalmente - opcion
-                                } else {
-                                    seleccionadasTemporalmente = seleccionadasTemporalmente + opcion
-                                }
+                                seleccionadas.value = if (isSelected) seleccionadas.value - opcion else seleccionadas.value + opcion
                             }
                         },
                         label = { Text(opcion) },
-                        leadingIcon = if (estaSeleccionada) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        } else null,
-                        colors = chipColors,
-                        enabled = true
+                        leadingIcon = if (isSelected) {
+                            { Icon(Icons.Filled.Check, null, modifier = Modifier.size(16.dp)) }
+                        } else null
                     )
                 }
-            }
-
-            if (editando) {
-                Text(
-                    text = "Toca las opciones para añadirlas o quitarlas.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
             }
         }
     }

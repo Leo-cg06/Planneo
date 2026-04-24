@@ -205,7 +205,7 @@ fun RegisterButton(
                     Toast.makeText(context, resources.getString(R.string.error_contrasenas_no_coinciden), Toast.LENGTH_SHORT).show()
                 }
                 else -> {
-                    viewModel.signUp(correo, contrasena)
+                    viewModel.registrarUsuario(correo, contrasena)
                 }
             }
         },
